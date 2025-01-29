@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Daily Spurgeon Quotes</title>
+		<link rel="preload" href="script.js" as="script" />
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				margin: 0;
+				padding: 0;
+				text-align: center;
+				background: #000;
+				color: #fff;
+				overflow: hidden;
+			}
+			.time {
+				font-size: 5rem;
+				margin: 50px;
+			}
+			.container {
+				font-size: 2.5rem;
+				margin: 0;
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+			}
+			.greeting {
+				margin: 100px auto;
+			}
+			.quote-block {
+				font-size: 2rem;
+				max-width: 80%;
+				left: 50%;
+				margin: 30px auto;
+			}
+			.background {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				z-index: -1;
+				background-size: cover;
+				background-position: center;
+				filter: brightness(0.5);
+			}
+		</style>
+	</head>
+	<body>
+		<div class="background" id="background"></div>
+		<div class="container">
+			<div class="time" id="time"></div>
+			<div class="greeting"><span id="timeOfDay">Good Day</span>, Patrick</div>
+			<div class="quote-block">
+				<p id="quote"></p>
+				<p>~ Charles Spurgeon</p>
+			</div>
+		</div>
+
+		<script src="script.js"></script>
+	</body>
+</html>
