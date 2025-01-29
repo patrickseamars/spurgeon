@@ -21,7 +21,7 @@ async function fetchRandomImage() {
 		const response = await fetch(url)
 		if (!response.ok) throw new Error('Failed to load image')
 		const data = await response.json()
-		return data.urls.regular || '' // Get the image URL
+		return data || '' // Get the image URL
 	} catch (error) {
 		console.error('Error fetching image:', error)
 		return 'https://via.placeholder.com/1600x900?text=Error+loading+image' // Fallback
@@ -35,23 +35,42 @@ async function updateQuoteAndBackground() {
 
 	const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
 	const storedDate = localStorage.getItem('lastImageDate')
-	const storedImage = localStorage.getItem('lastImageUrl')
+	const storedImageURL = localStorage.getItem('lastImageUrl')
+	const storedPhotog = localStorage.getItem('lastImagePhotog')
+	const storedPhotogLink = localStorage.getItem('lastImagePhotogLink')
+	const storedLocation = localStorage.getItem('lastImageLocation')
 
-	let image = await fetchRandomImage()
+	let image, imageURL, photog, photogLink, location
 
-	if (storedDate === today && storedImage) {
+	if (storedDate === today && storedImageURL) {
 		// Use the stored image if it's the same day
-		image = storedImage
+		imageURL = storedImageURL
+		photog = storedPhotog
+		photogLink = storedPhotogLink
+		location = storedLocation
 	} else {
 		// Fetch a new image and store it with today's date
 		image = await fetchRandomImage()
+		imageURL = image.urls.regular
+		photog = image.user.name
+		photogLink = image.user.links.html
+		location = image.location.name
+
 		localStorage.setItem('lastImageDate', today)
-		localStorage.setItem('lastImageUrl', image)
+		localStorage.setItem('lastImageUrl', image.urls.regular)
+		localStorage.setItem('lastImagePhotog', image.user.name)
+		localStorage.setItem('lastImagePhotogLink', image.user.links.html)
+		localStorage.setItem('lastImageLocation', image.location.name)
 	}
 
 	// Update the quote and background
 	document.getElementById('quote').textContent = quote
-	document.getElementById('background').style.backgroundImage = `url(${image})` // Set background image
+	document.getElementById(
+		'background'
+	).style.backgroundImage = `url(${imageURL})` // Set background image
+	document.getElementById('photog').textContent = photog
+	document.getElementById('photog').href = photogLink
+	document.getElementById('location').textContent = location
 }
 
 // Update the time on the page

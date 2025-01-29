@@ -36,6 +36,31 @@
 				left: 50%;
 				margin: 30px auto;
 			}
+			.attribution {
+				bottom: 0;
+				position: fixed;
+				margin: 20px 40px;
+			}
+			/* unvisited link */
+			a:link {
+				color: rgb(219, 4, 4);
+			}
+
+			/* visited link */
+			a:visited {
+				color: green;
+			}
+
+			/* mouse over link */
+			a:hover {
+				color: hotpink;
+			}
+
+			/* selected link */
+			a:active {
+				color: blue;
+			}
+
 			.background {
 				position: fixed;
 				top: 0;
@@ -58,6 +83,15 @@
 				<p id="quote"></p>
 				<p>~ Charles Spurgeon</p>
 			</div>
+		</div>
+		<div class="attribution">
+			photo by: <a href="" id="photog"></a> on
+			<a
+				href="https://unsplash.com/?utm_source=a_moment_of_spurgeon&utm_medium=referral"
+			>
+				Unsplash
+			</a>
+			<p id="location"></p>
 		</div>
 
 		<script src="script.js"></script>
