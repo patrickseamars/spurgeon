@@ -70,6 +70,7 @@ async function updateQuoteAndBackground() {
 	).style.backgroundImage = `url(${imageURL})` // Set background image
 	document.getElementById('photog').textContent = photog
 	document.getElementById('photog').href = photogLink
+	document.getElementById('photoLink').href = imageURL
 	document.getElementById('location').textContent = location
 }
 
