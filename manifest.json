@@ -6,7 +6,7 @@
 	"icons": {
 		"16": "icon1.png",
 		"48": "icon1.png",
-		"128": "icon1.png"
+		"128": "spurgeon_icon.png"
 	},
 	"chrome_url_overrides": {
 		"newtab": "index.html"
