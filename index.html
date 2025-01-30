@@ -4,6 +4,12 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>A Moment With Spurgeon</title>
+		<link
+			rel="icon"
+			type="image/png"
+			sizes="16x16"
+			href="spurgeon_icon_16.png"
+		/>
 		<link rel="preload" href="script.js" as="script" />
 		<style>
 			body {
@@ -26,6 +32,8 @@
 				top: 50%;
 				left: 50%;
 				transform: translate(-50%, -50%);
+				opacity: 0; /* Start hidden */
+				animation: fadeIn 2s forwards; /* Apply fade-in animation */
 			}
 			.greeting {
 				margin: 100px auto;
@@ -75,6 +83,11 @@
 				background-size: cover;
 				background-position: center;
 				filter: brightness(0.5);
+			}
+			@keyframes fadeIn {
+				to {
+					opacity: 1;
+				}
 			}
 		</style>
 	</head>
