@@ -31,7 +31,12 @@ async function fetchRandomImage() {
 // Select a daily quote based on the current date
 async function updateQuoteAndBackground() {
 	const quotes = await fetchQuotes()
-	const quote = quotes[new Date().getDate() % quotes.length] // Select a daily quote
+	const now = new Date();
+	const start = new Date(now.getFullYear(), 0, 0);
+	const diff = now - start;
+	const oneDay = 1000 * 60 * 60 * 24;
+	const dayOfYear = Math.floor(diff / oneDay);
+	const quote = quotes[dayOfYear % quotes.length]; // Select a daily quote
 
 	const today = new Date().toISOString().split('T')[0] // Get today's date in YYYY-MM-DD format
 	const storedDate = localStorage.getItem('lastImageDate')
