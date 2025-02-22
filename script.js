@@ -57,13 +57,13 @@ async function updateQuoteAndBackground() {
 	} else {
 		// Fetch a new image and store it with today's date
 		image = await fetchRandomImage();
-		imageURL = image.urls.regular;
+		imageURL = image.urls.full;
 		photog = image.user.name;
 		photogLink = image.user.links.html;
 		location = image.location.name;
 
 		localStorage.setItem("lastImageDate", today);
-		localStorage.setItem("lastImageUrl", image.urls.regular);
+		localStorage.setItem("lastImageUrl", image.urls.full);
 		localStorage.setItem("lastImagePhotog", image.user.name);
 		localStorage.setItem("lastImagePhotogLink", image.user.links.html);
 		localStorage.setItem("lastImageLocation", image.location.name);
