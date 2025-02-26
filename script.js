@@ -7,7 +7,7 @@ async function fetchQuotes() {
 	} catch (error) {
 		console.error("Error fetching quotes:", error);
 		return [
-			"A Bible that’s falling apart usually belongs to someone who isn’t."
+			"A Bible that’s falling apart usually belongs to someone who isn’t.",
 		]; // Return fallback quotes if fetch fails
 	}
 }
@@ -81,14 +81,32 @@ async function updateQuoteAndBackground() {
 	document.getElementById("location").textContent = location;
 }
 
+let is24HourFormat = true; // Default to 24-hour format
+
+// Toggle time format
+function toggleTimeFormat() {
+	is24HourFormat = !is24HourFormat;
+	updateTime(); // Update time display immediately
+}
+
 // Update the time on the page
 function updateTime() {
 	const now = new Date();
-	const hours = String(now.getHours()).padStart(2, "0");
+	let hours = now.getHours();
 	const minutes = String(now.getMinutes()).padStart(2, "0");
-	document.getElementById("time").textContent = `${hours}:${minutes}`;
 
 	let timeOfDay = "";
+
+	if (is24HourFormat) {
+		hours = String(hours).padStart(2, "0");
+		document.getElementById("time").textContent = `${hours}:${minutes}`;
+	} else {
+		const period = hours >= 12 ? "PM" : "AM";
+		hours = hours % 12 || 12; // Convert to 12-hour format
+		document.getElementById(
+			"time"
+		).textContent = `${hours}:${minutes} ${period}`;
+	}
 
 	if (hours >= 13) {
 		timeOfDay = "Good Afternoon";
@@ -101,7 +119,31 @@ function updateTime() {
 	document.getElementById("timeOfDay").textContent = timeOfDay;
 }
 
-// Update time every second
-setInterval(updateTime, 1000);
-updateTime(); // Initial time update
-updateQuoteAndBackground(); // Update quote and background on page load
+document.addEventListener("DOMContentLoaded", () => {
+	// Update time every second
+	setInterval(updateTime, 1000);
+	updateTime(); // Initial time update
+	updateQuoteAndBackground(); // Update quote and background on page load
+
+	// Add event listeners for the radio buttons
+	const format12hr = document.getElementById("format12hr");
+	const format24hr = document.getElementById("format24hr");
+
+	if (format12hr && format24hr) {
+		format12hr.addEventListener("change", () => {
+			if (format12hr.checked) {
+				is24HourFormat = false;
+				updateTime();
+			}
+		});
+
+		format24hr.addEventListener("change", () => {
+			if (format24hr.checked) {
+				is24HourFormat = true;
+				updateTime();
+			}
+		});
+	} else {
+		console.error("Time format toggle buttons not found");
+	}
+});

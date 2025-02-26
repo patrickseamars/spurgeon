@@ -11,92 +11,13 @@
 			href="spurgeon_icon_16.png"
 		/>
 		<link rel="preload" href="script.js" as="script" />
-		<style>
-			body {
-				font-family: Arial, sans-serif;
-				margin: 0;
-				padding: 0;
-				text-align: center;
-				background: #000;
-				color: #fff;
-				overflow: hidden;
-				opacity: 0; /* Start hidden */
-				animation: fadeIn 1s forwards; /* Apply fade-in animation */
-			}
-			.time {
-				font-size: 5rem;
-				margin: 50px;
-			}
-			.container {
-				font-size: 2.5rem;
-				margin: 0;
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-				opacity: 0; /* Start hidden */
-				animation: fadeIn 2.25s forwards; /* Apply fade-in animation */
-			}
-			.greeting {
-				margin: 100px auto;
-			}
-			.quote-block {
-				font-size: 2rem;
-				max-width: 80%;
-				left: 50%;
-				margin: 30px auto;
-			}
-			.attribution {
-				bottom: 0;
-				position: fixed;
-				margin: 20px 40px;
-			}
-			/* unvisited link */
-			a:link {
-				color: rgb(219, 4, 4);
-			}
-
-			/* visited link */
-			a:visited {
-				color: green;
-			}
-
-			/* mouse over link */
-			a:hover {
-				color: hotpink;
-			}
-
-			/* selected link */
-			a:active {
-				color: blue;
-			}
-
-			a#photoLink {
-				color: #a19d9d;
-			}
-
-			.background {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				z-index: -1;
-				background-size: cover;
-				background-position: center;
-				filter: brightness(0.5);
-			}
-			@keyframes fadeIn {
-				to {
-					opacity: 1;
-				}
-			}
-		</style>
+		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
 		<div class="background" id="background"></div>
 		<div class="container">
 			<div class="time" id="time"></div>
+
 			<div class="greeting"><span id="timeOfDay"></span></div>
 			<div class="quote-block">
 				<p id="quote"></p>
@@ -112,6 +33,23 @@
 				Unsplash
 			</a>
 			<p id="location"></p>
+		</div>
+		<div class="toggle-container">
+			<div class="toggle-wrapper">
+				<input type="radio" name="timeFormat" id="format12hr" value="12hr" />
+				<input
+					type="radio"
+					name="timeFormat"
+					id="format24hr"
+					value="24hr"
+					checked
+				/>
+
+				<div class="toggle-slider"></div>
+
+				<label class="toggle-label left" for="format12hr">12h</label>
+				<label class="toggle-label right" for="format24hr">24h</label>
+			</div>
 		</div>
 
 		<script src="script.js"></script>
