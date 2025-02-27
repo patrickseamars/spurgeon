@@ -81,6 +81,44 @@ async function updateQuoteAndBackground() {
 	document.getElementById("location").textContent = location;
 }
 
+// Fetch a new image and update the background and local storage
+async function fetchAndUpdateImage() {
+	const today = new Date().toISOString().split("T")[0];
+	const image = await fetchRandomImage();
+	const imageURL = image.urls.full;
+	const photog = image.user.name;
+	const photogLink = image.user.links.html;
+	const location = image.location.name;
+
+	localStorage.setItem("lastImageDate", today);
+	localStorage.setItem("lastImageUrl", image.urls.full);
+	localStorage.setItem("lastImagePhotog", image.user.name);
+	localStorage.setItem("lastImagePhotogLink", image.user.links.html);
+	localStorage.setItem("lastImageLocation", image.location.name);
+
+	document.getElementById(
+		"background"
+	).style.backgroundImage = `url(${imageURL})`; // Set background image
+	document.getElementById("photog").textContent = photog;
+	document.getElementById("photog").href =
+		photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
+	document.getElementById("photoLink").href = imageURL;
+	document.getElementById("location").textContent = location;
+}
+
+// Fetch a new quote and update the displayed quote
+async function fetchAndUpdateQuote() {
+	const quotes = await fetchQuotes();
+	const now = new Date();
+	const start = new Date(now.getFullYear(), 0, 0);
+	const diff = now - start;
+	const oneDay = 1000 * 60 * 60 * 24;
+	const dayOfYear = Math.floor(diff / oneDay);
+	const quote = quotes[dayOfYear % quotes.length]; // Select a daily quote
+
+	document.getElementById("quote").textContent = quote;
+}
+
 let is24HourFormat = true; // Default to 24-hour format
 
 // Toggle time format
@@ -108,15 +146,28 @@ function updateTime() {
 		).textContent = `${hours}:${minutes} ${period}`;
 	}
 
-	if (hours >= 13) {
-		timeOfDay = "Good Afternoon";
-	} else if (hours >= 17) {
+	const displayHours = now.getHours();
+
+	if (displayHours >= 17) {
 		timeOfDay = "Good Evening";
+	} else if (displayHours >= 12) {
+		timeOfDay = "Good Afternoon";
 	} else {
 		timeOfDay = "Good Morning";
 	}
 
-	document.getElementById("timeOfDay").textContent = timeOfDay;
+	const userName = localStorage.getItem("userName");
+	if (userName) {
+		document.getElementById(
+			"timeOfDay"
+		).textContent = `${timeOfDay}, ${userName}`;
+		document.getElementById("userNamePrompt").style.display = "none";
+		document.getElementById("userNameInput").style.display = "none";
+	} else {
+		document.getElementById("timeOfDay").textContent = timeOfDay;
+		document.getElementById("userNamePrompt").style.display = "inline";
+		document.getElementById("userNameInput").style.display = "inline";
+	}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -145,5 +196,47 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	} else {
 		console.error("Time format toggle buttons not found");
+	}
+
+	// Add event listener for the new image button
+	const newImageButton = document.getElementById("newImageButton");
+	if (newImageButton) {
+		newImageButton.addEventListener("click", fetchAndUpdateImage);
+	} else {
+		console.error("New image button not found");
+	}
+
+	// Add event listener for the new quote button
+	const newQuoteButton = document.getElementById("newQuoteButton");
+	if (newQuoteButton) {
+		newQuoteButton.addEventListener("click", fetchAndUpdateQuote);
+	} else {
+		console.error("New quote button not found");
+	}
+
+	// Add event listener for the user name input
+	const userNameInput = document.getElementById("userNameInput");
+	if (userNameInput) {
+		userNameInput.addEventListener("change", () => {
+			const userName = userNameInput.value.trim();
+			if (userName) {
+				localStorage.setItem("userName", userName);
+				updateTime();
+			}
+		});
+	} else {
+		console.error("User name input not found");
+	}
+
+	// Remove event listener for the hamburger menu
+	const hamburgerMenu = document.getElementById("hamburgerMenu");
+	const drawer = document.getElementById("drawer");
+
+	if (hamburgerMenu && drawer) {
+		hamburgerMenu.removeEventListener("click", () => {
+			drawer.classList.toggle("open");
+		});
+	} else {
+		console.error("Hamburger menu or drawer not found");
 	}
 });

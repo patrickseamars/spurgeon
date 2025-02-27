@@ -18,7 +18,11 @@
 		<div class="container">
 			<div class="time" id="time"></div>
 
-			<div class="greeting"><span id="timeOfDay"></span></div>
+			<div class="greeting">
+				<span id="timeOfDay"></span>
+				<span id="userNamePrompt">, what's your name?</span>
+				<input type="text" id="userNameInput" placeholder="Enter your name" />
+			</div>
 			<div class="quote-block">
 				<p id="quote"></p>
 				<p>~ Charles Spurgeon</p>
@@ -50,8 +54,10 @@
 				<label class="toggle-label left" for="format12hr">12h</label>
 				<label class="toggle-label right" for="format24hr">24h</label>
 			</div>
-		</div>
 
+			<button id="newImageButton">New Image</button>
+			<button id="newQuoteButton">New Quote</button>
+		</div>
 		<script src="script.js"></script>
 	</body>
 </html>
