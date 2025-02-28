@@ -79,6 +79,13 @@ async function updateQuoteAndBackground() {
 		photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
 	document.getElementById("photoLink").href = imageURL;
 	document.getElementById("location").textContent = location;
+
+	// Hide the loading spinner
+	const loadingSpinner = document.getElementById("loadingSpinner");
+	loadingSpinner.classList.add("hidden");
+	setTimeout(() => {
+		loadingSpinner.style.display = "none";
+	}, 500); // Wait for the transition to complete
 }
 
 // Fetch a new image and update the background and local storage

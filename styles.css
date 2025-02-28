@@ -3,12 +3,46 @@ body {
 	margin: 0;
 	padding: 0;
 	text-align: center;
-	background: #000;
+	background: rgb(220 216 210);
 	color: #fff;
 	overflow: hidden;
-	opacity: 0; /* Start hidden */
-	animation: fadeIn 1s forwards; /* Apply fade-in animation */
+	/* opacity: 0; /* Start hidden */
+	/* animation: fadeIn 0.5s forwards 0.5s; /* Apply fade-in animation with delay */
 }
+
+#loadingSpinner {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgb(220 216 210);
+	width: 100%;
+	height: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 9999;
+	transition: opacity 0.75s ease-out;
+}
+
+#loadingSpinner img.image {
+	width: 100px;
+	height: 100px;
+	opacity: 0.5;
+	border-radius: 20px;
+}
+
+#loadingSpinner .signature {
+	width: 200px;
+	height: 100px;
+	display: block;
+}
+
+.hidden {
+	opacity: 0;
+	pointer-events: none;
+}
+
 .time {
 	font-size: 5rem;
 	margin: 50px;
@@ -21,7 +55,7 @@ body {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	opacity: 0; /* Start hidden */
-	animation: fadeIn 2.25s forwards; /* Apply fade-in animation */
+	animation: fadeIn 1s forwards 0.25s; /* Apply fade-in animation with delay */
 }
 .greeting {
 	margin: 100px auto;
@@ -71,6 +105,8 @@ a#photoLink {
 	background-size: cover;
 	background-position: center;
 	filter: brightness(0.5);
+	opacity: 0; /* Start hidden */
+	animation: fadeIn 2s forwards 0.25s; /* Apply fade-in animation with delay */
 }
 @keyframes fadeIn {
 	to {
