@@ -1,4 +1,3 @@
-// Fetch the quotes from the local JSON file
 async function fetchQuotes() {
 	try {
 		const response = await fetch("quotes.json");
@@ -8,33 +7,28 @@ async function fetchQuotes() {
 		console.error("Error fetching quotes:", error);
 		return [
 			"A Bible that’s falling apart usually belongs to someone who isn’t.",
-		]; // Return fallback quotes if fetch fails
+		];
 	}
 }
 
-// Fetch a random image from Unsplash API
 async function fetchRandomImage() {
 	const url =
 		"https://melodious-dusk-d264c9.netlify.app/.netlify/functions/unsplash";
-
 	try {
 		const response = await fetch(url);
 		if (!response.ok) throw new Error("Failed to load image");
 		const data = await response.json();
-		return data || ""; // Get the image URL
+		return data || "";
 	} catch (error) {
 		console.error("Error fetching image:", error);
-		return "https://via.placeholder.com/1600x900?text=Error+loading+image"; // Fallback
+		return "https://via.placeholder.com/1600x900?text=Error+loading+image";
 	}
 }
 
-// Hide the loader with a fade-out effect
 function hideLoader() {
-	const loader = document.getElementById("loader");
-	loader.classList.add("hidden");
+	document.getElementById("loader").classList.add("hidden");
 }
 
-// Select a daily quote based on the current date
 async function updateQuoteAndBackground() {
 	const quotes = await fetchQuotes();
 	const now = new Date();
@@ -42,9 +36,9 @@ async function updateQuoteAndBackground() {
 	const diff = now - start;
 	const oneDay = 1000 * 60 * 60 * 24;
 	const dayOfYear = Math.floor(diff / oneDay);
-	const quote = quotes[dayOfYear % quotes.length]; // Select a daily quote
+	const quote = quotes[dayOfYear % quotes.length];
 
-	const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+	const today = new Date().toISOString().split("T")[0];
 	const storedDate = localStorage.getItem("lastImageDate");
 	const storedImageURL = localStorage.getItem("lastImageUrl");
 	const storedPhotog = localStorage.getItem("lastImagePhotog");
@@ -52,29 +46,27 @@ async function updateQuoteAndBackground() {
 	const storedLocation = localStorage.getItem("lastImageLocation");
 	const storedQuote = localStorage.getItem("lastQuote");
 
-	let image, imageURL, photog, photogLink, location;
+	let imageURL, photog, photogLink, location;
 
 	if (storedDate === today && storedImageURL) {
 		console.log("Using stored image and quote");
-		// Use the stored image and quote if it's the same day
 		imageURL = storedImageURL;
 		photog = storedPhotog;
 		photogLink = storedPhotogLink;
 		location = storedLocation;
 		document.getElementById("quote").textContent = storedQuote || quote;
 	} else {
-		// Fetch a new image and store it with today's date
-		image = await fetchRandomImage();
+		const image = await fetchRandomImage();
 		imageURL = image.urls.full;
 		photog = image.user.name;
 		photogLink = image.user.links.html;
 		location = image.location.name;
 
 		localStorage.setItem("lastImageDate", today);
-		localStorage.setItem("lastImageUrl", image.urls.full);
-		localStorage.setItem("lastImagePhotog", image.user.name);
-		localStorage.setItem("lastImagePhotogLink", image.user.links.html);
-		localStorage.setItem("lastImageLocation", image.location.name);
+		localStorage.setItem("lastImageUrl", imageURL);
+		localStorage.setItem("lastImagePhotog", photog);
+		localStorage.setItem("lastImagePhotogLink", photogLink);
+		localStorage.setItem("lastImageLocation", location);
 		localStorage.setItem("lastQuote", quote);
 		document.getElementById("quote").textContent = quote;
 	}
@@ -84,24 +76,22 @@ async function updateQuoteAndBackground() {
 	img.onload = () => {
 		document.getElementById(
 			"background"
-		).style.backgroundImage = `url(${imageURL})`; // Set background image
+		).style.backgroundImage = `url(${imageURL})`;
 		document.getElementById("photog").textContent = photog;
-		document.getElementById("photog").href =
-			photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
+		document.getElementById(
+			"photog"
+		).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
 		document.getElementById("photoLink").href = imageURL;
 		document.getElementById("location").textContent = location;
 
-		document.querySelector(".container").style.display = "block"; // Show the container
+		document.querySelector(".container").style.display = "block";
 		hideLoader();
 	};
 
-	// Show the loader
-	const loader = document.getElementById("loader");
-	loader.classList.remove("hidden");
-	document.querySelector(".container").style.display = "none"; // Hide the container
+	document.getElementById("loader").classList.remove("hidden");
+	document.querySelector(".container").style.display = "none";
 }
 
-// Fetch a new image and update the background and local storage
 async function fetchAndUpdateImage() {
 	const today = new Date().toISOString().split("T")[0];
 	const image = await fetchRandomImage();
@@ -111,51 +101,47 @@ async function fetchAndUpdateImage() {
 	const location = image.location.name;
 
 	localStorage.setItem("lastImageDate", today);
-	localStorage.setItem("lastImageUrl", image.urls.full);
-	localStorage.setItem("lastImagePhotog", image.user.name);
-	localStorage.setItem("lastImagePhotogLink", image.user.links.html);
-	localStorage.setItem("lastImageLocation", image.location.name);
+	localStorage.setItem("lastImageUrl", imageURL);
+	localStorage.setItem("lastImagePhotog", photog);
+	localStorage.setItem("lastImagePhotogLink", photogLink);
+	localStorage.setItem("lastImageLocation", location);
 
 	const img = new Image();
 	img.src = imageURL;
 	img.onload = () => {
 		document.getElementById(
 			"background"
-		).style.backgroundImage = `url(${imageURL})`; // Set background image
+		).style.backgroundImage = `url(${imageURL})`;
 		document.getElementById("photog").textContent = photog;
-		document.getElementById("photog").href =
-			photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
+		document.getElementById(
+			"photog"
+		).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
 		document.getElementById("photoLink").href = imageURL;
 		document.getElementById("location").textContent = location;
 
-		document.querySelector(".container").style.display = "block"; // Show the container
+		document.querySelector(".container").style.display = "block";
 		hideLoader();
 	};
 
-	// Show the loader
-	const loader = document.getElementById("loader");
-	loader.classList.remove("hidden");
-	document.querySelector(".container").style.display = "none"; // Hide the container
+	document.getElementById("loader").classList.remove("hidden");
+	document.querySelector(".container").style.display = "none";
 }
 
-// Fetch a new quote and update the displayed quote
 async function fetchAndUpdateQuote() {
 	const quotes = await fetchQuotes();
-	const quote = quotes[Math.floor(Math.random() * quotes.length)]; // Select a random quote
-
+	const quote = quotes[Math.floor(Math.random() * quotes.length)];
 	document.getElementById("quote").textContent = quote;
-	localStorage.setItem("lastQuote", quote); // Store the new quote
+	localStorage.setItem("lastQuote", quote);
 }
 
-let is24HourFormat = true; // Default to 24-hour format
+let is24HourFormat = localStorage.getItem("is24HourFormat") === "true";
 
-// Toggle time format
 function toggleTimeFormat() {
 	is24HourFormat = !is24HourFormat;
-	updateTime(); // Update time display immediately
+	localStorage.setItem("is24HourFormat", is24HourFormat);
+	updateTime();
 }
 
-// Update the time on the page
 function updateTime() {
 	const now = new Date();
 	let hours = now.getHours();
@@ -168,7 +154,7 @@ function updateTime() {
 		document.getElementById("time").textContent = `${hours}:${minutes}`;
 	} else {
 		const period = hours >= 12 ? "PM" : "AM";
-		hours = hours % 12 || 12; // Convert to 12-hour format
+		hours = hours % 12 || 12;
 		document.getElementById(
 			"time"
 		).textContent = `${hours}:${minutes} ${period}`;
@@ -201,19 +187,21 @@ function updateTime() {
 document.addEventListener("DOMContentLoaded", () => {
 	hideLoader();
 
-	// Update time every second
 	setInterval(updateTime, 1000);
-	updateTime(); // Initial time update
-	updateQuoteAndBackground(); // Update quote and background on page load
+	updateTime();
+	updateQuoteAndBackground();
 
-	// Add event listeners for the radio buttons
 	const format12hr = document.getElementById("format12hr");
 	const format24hr = document.getElementById("format24hr");
 
 	if (format12hr && format24hr) {
+		format12hr.checked = !is24HourFormat;
+		format24hr.checked = is24HourFormat;
+
 		format12hr.addEventListener("change", () => {
 			if (format12hr.checked) {
 				is24HourFormat = false;
+				localStorage.setItem("is24HourFormat", is24HourFormat);
 				updateTime();
 			}
 		});
@@ -221,6 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		format24hr.addEventListener("change", () => {
 			if (format24hr.checked) {
 				is24HourFormat = true;
+				localStorage.setItem("is24HourFormat", is24HourFormat);
 				updateTime();
 			}
 		});
@@ -228,7 +217,6 @@ document.addEventListener("DOMContentLoaded", () => {
 		console.error("Time format toggle buttons not found");
 	}
 
-	// Add event listener for the new image button
 	const newImageButton = document.getElementById("newImageButton");
 	if (newImageButton) {
 		newImageButton.addEventListener("click", fetchAndUpdateImage);
@@ -236,7 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
 		console.error("New image button not found");
 	}
 
-	// Add event listener for the new quote button
 	const newQuoteButton = document.getElementById("newQuoteButton");
 	if (newQuoteButton) {
 		newQuoteButton.addEventListener("click", fetchAndUpdateQuote);
@@ -244,7 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
 		console.error("New quote button not found");
 	}
 
-	// Add event listener for the user name input
 	const userNameInput = document.getElementById("userNameInput");
 	if (userNameInput) {
 		userNameInput.addEventListener("change", () => {
