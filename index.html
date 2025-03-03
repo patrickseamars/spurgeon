@@ -14,16 +14,19 @@
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
-		<div id="loadingSpinner">
-			<img class="img" src="spurgeon_icon.png" alt="Loading..." />
-			<img
-				class="signature"
-				src="spurgeon-signature.jpg"
-				alt="Spurgeon Signature"
-			/>
+		<div id="loader">
+			<div class="image-container">
+				<img class="image" src="spurgeon_icon.png" alt="Spurgeon Icon" />
+				<img
+					class="signature"
+					src="spurgeon-signature.jpg"
+					alt="Spurgeon Signature"
+				/>
+			</div>
+			<div class="loading-text"></div>
 		</div>
 		<div class="background" id="background"></div>
-		<div class="container">
+		<div class="container" style="display: none">
 			<div class="time" id="time"></div>
 
 			<div class="greeting">

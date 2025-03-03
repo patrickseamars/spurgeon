@@ -9,3 +9,6 @@ package-lock.json
 # Netlify build
 .netlify/
 functions/node_modules/
+
+# Local build
+*.zip

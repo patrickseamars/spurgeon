@@ -28,6 +28,12 @@ async function fetchRandomImage() {
 	}
 }
 
+// Hide the loader with a fade-out effect
+function hideLoader() {
+	const loader = document.getElementById("loader");
+	loader.classList.add("hidden");
+}
+
 // Select a daily quote based on the current date
 async function updateQuoteAndBackground() {
 	const quotes = await fetchQuotes();
@@ -44,16 +50,18 @@ async function updateQuoteAndBackground() {
 	const storedPhotog = localStorage.getItem("lastImagePhotog");
 	const storedPhotogLink = localStorage.getItem("lastImagePhotogLink");
 	const storedLocation = localStorage.getItem("lastImageLocation");
+	const storedQuote = localStorage.getItem("lastQuote");
 
 	let image, imageURL, photog, photogLink, location;
 
 	if (storedDate === today && storedImageURL) {
-		console.log("Using stored image");
-		// Use the stored image if it's the same day
+		console.log("Using stored image and quote");
+		// Use the stored image and quote if it's the same day
 		imageURL = storedImageURL;
 		photog = storedPhotog;
 		photogLink = storedPhotogLink;
 		location = storedLocation;
+		document.getElementById("quote").textContent = storedQuote || quote;
 	} else {
 		// Fetch a new image and store it with today's date
 		image = await fetchRandomImage();
@@ -67,25 +75,30 @@ async function updateQuoteAndBackground() {
 		localStorage.setItem("lastImagePhotog", image.user.name);
 		localStorage.setItem("lastImagePhotogLink", image.user.links.html);
 		localStorage.setItem("lastImageLocation", image.location.name);
+		localStorage.setItem("lastQuote", quote);
+		document.getElementById("quote").textContent = quote;
 	}
 
-	// Update the quote and background
-	document.getElementById("quote").textContent = quote;
-	document.getElementById(
-		"background"
-	).style.backgroundImage = `url(${imageURL})`; // Set background image
-	document.getElementById("photog").textContent = photog;
-	document.getElementById("photog").href =
-		photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
-	document.getElementById("photoLink").href = imageURL;
-	document.getElementById("location").textContent = location;
+	const img = new Image();
+	img.src = imageURL;
+	img.onload = () => {
+		document.getElementById(
+			"background"
+		).style.backgroundImage = `url(${imageURL})`; // Set background image
+		document.getElementById("photog").textContent = photog;
+		document.getElementById("photog").href =
+			photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
+		document.getElementById("photoLink").href = imageURL;
+		document.getElementById("location").textContent = location;
 
-	// Hide the loading spinner
-	const loadingSpinner = document.getElementById("loadingSpinner");
-	loadingSpinner.classList.add("hidden");
-	setTimeout(() => {
-		loadingSpinner.style.display = "none";
-	}, 500); // Wait for the transition to complete
+		document.querySelector(".container").style.display = "block"; // Show the container
+		hideLoader();
+	};
+
+	// Show the loader
+	const loader = document.getElementById("loader");
+	loader.classList.remove("hidden");
+	document.querySelector(".container").style.display = "none"; // Hide the container
 }
 
 // Fetch a new image and update the background and local storage
@@ -103,27 +116,35 @@ async function fetchAndUpdateImage() {
 	localStorage.setItem("lastImagePhotogLink", image.user.links.html);
 	localStorage.setItem("lastImageLocation", image.location.name);
 
-	document.getElementById(
-		"background"
-	).style.backgroundImage = `url(${imageURL})`; // Set background image
-	document.getElementById("photog").textContent = photog;
-	document.getElementById("photog").href =
-		photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
-	document.getElementById("photoLink").href = imageURL;
-	document.getElementById("location").textContent = location;
+	const img = new Image();
+	img.src = imageURL;
+	img.onload = () => {
+		document.getElementById(
+			"background"
+		).style.backgroundImage = `url(${imageURL})`; // Set background image
+		document.getElementById("photog").textContent = photog;
+		document.getElementById("photog").href =
+			photogLink + "?utm_source=a_moment_of_spurgeon&utm_medium=referral";
+		document.getElementById("photoLink").href = imageURL;
+		document.getElementById("location").textContent = location;
+
+		document.querySelector(".container").style.display = "block"; // Show the container
+		hideLoader();
+	};
+
+	// Show the loader
+	const loader = document.getElementById("loader");
+	loader.classList.remove("hidden");
+	document.querySelector(".container").style.display = "none"; // Hide the container
 }
 
 // Fetch a new quote and update the displayed quote
 async function fetchAndUpdateQuote() {
 	const quotes = await fetchQuotes();
-	const now = new Date();
-	const start = new Date(now.getFullYear(), 0, 0);
-	const diff = now - start;
-	const oneDay = 1000 * 60 * 60 * 24;
-	const dayOfYear = Math.floor(diff / oneDay);
-	const quote = quotes[dayOfYear % quotes.length]; // Select a daily quote
+	const quote = quotes[Math.floor(Math.random() * quotes.length)]; // Select a random quote
 
 	document.getElementById("quote").textContent = quote;
+	localStorage.setItem("lastQuote", quote); // Store the new quote
 }
 
 let is24HourFormat = true; // Default to 24-hour format
@@ -178,6 +199,8 @@ function updateTime() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+	hideLoader();
+
 	// Update time every second
 	setInterval(updateTime, 1000);
 	updateTime(); // Initial time update
@@ -233,17 +256,5 @@ document.addEventListener("DOMContentLoaded", () => {
 		});
 	} else {
 		console.error("User name input not found");
-	}
-
-	// Remove event listener for the hamburger menu
-	const hamburgerMenu = document.getElementById("hamburgerMenu");
-	const drawer = document.getElementById("drawer");
-
-	if (hamburgerMenu && drawer) {
-		hamburgerMenu.removeEventListener("click", () => {
-			drawer.classList.toggle("open");
-		});
-	} else {
-		console.error("Hamburger menu or drawer not found");
 	}
 });
