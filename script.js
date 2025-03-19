@@ -11,22 +11,34 @@ async function fetchQuotes() {
 	}
 }
 
-async function fetchRandomImage() {
+async function fetchRandomImages() {
 	const url =
 		"https://melodious-dusk-d264c9.netlify.app/.netlify/functions/unsplash";
 	try {
-		const response = await fetch(url);
-		if (!response.ok) throw new Error("Failed to load image");
-		const data = await response.json();
-		return data || "";
+		const promises = Array.from({ length: 10 }, () =>
+			fetch(url).then((res) => res.json())
+		);
+		const images = await Promise.all(promises);
+		return images;
 	} catch (error) {
-		console.error("Error fetching image:", error);
-		return "https://via.placeholder.com/1600x900?text=Error+loading+image";
+		console.error("Error fetching images:", error);
+		return Array(10).fill({
+			urls: {
+				full: "https://via.placeholder.com/1600x900?text=Error+loading+image",
+			},
+			user: { name: "Unknown", links: { html: "#" } },
+			location: { name: "Unknown" },
+		});
 	}
 }
 
 function hideLoader() {
 	document.getElementById("loader").classList.add("hidden");
+}
+
+function showLoader() {
+	document.getElementById("loader").classList.remove("hidden");
+	document.querySelector(".container").style.display = "none";
 }
 
 async function updateQuoteAndBackground() {
@@ -40,33 +52,33 @@ async function updateQuoteAndBackground() {
 
 	const today = new Date().toISOString().split("T")[0];
 	const storedDate = localStorage.getItem("lastImageDate");
-	const storedImageURL = localStorage.getItem("lastImageUrl");
-	const storedPhotog = localStorage.getItem("lastImagePhotog");
-	const storedPhotogLink = localStorage.getItem("lastImagePhotogLink");
-	const storedLocation = localStorage.getItem("lastImageLocation");
+	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
+	const storedImageIndex =
+		parseInt(localStorage.getItem("imageIndex"), 10) || 0;
 	const storedQuote = localStorage.getItem("lastQuote");
 
-	let imageURL, photog, photogLink, location;
+	let image, imageURL, photog, photogLink, location;
 
-	if (storedDate === today && storedImageURL) {
+	if (storedDate === today && storedImages.length > 0) {
 		console.log("Using stored image and quote");
-		imageURL = storedImageURL;
-		photog = storedPhotog;
-		photogLink = storedPhotogLink;
-		location = storedLocation;
+		image = storedImages[storedImageIndex];
+		imageURL = image.urls.full;
+		photog = image.user.name;
+		photogLink = image.user.links.html;
+		location = image.location.name;
 		document.getElementById("quote").textContent = storedQuote || quote;
 	} else {
-		const image = await fetchRandomImage();
+		showLoader();
+		const images = await fetchRandomImages();
+		localStorage.setItem("imagesArray", JSON.stringify(images));
+		localStorage.setItem("imageIndex", 0);
+		image = images[0];
 		imageURL = image.urls.full;
 		photog = image.user.name;
 		photogLink = image.user.links.html;
 		location = image.location.name;
 
 		localStorage.setItem("lastImageDate", today);
-		localStorage.setItem("lastImageUrl", imageURL);
-		localStorage.setItem("lastImagePhotog", photog);
-		localStorage.setItem("lastImagePhotogLink", photogLink);
-		localStorage.setItem("lastImageLocation", location);
 		localStorage.setItem("lastQuote", quote);
 		document.getElementById("quote").textContent = quote;
 	}
@@ -85,26 +97,30 @@ async function updateQuoteAndBackground() {
 		document.getElementById("location").textContent = location;
 
 		document.querySelector(".container").style.display = "block";
-		hideLoader();
+		hideLoader(); // Ensure loader is hidden after initial image load
 	};
-
-	document.getElementById("loader").classList.remove("hidden");
-	document.querySelector(".container").style.display = "none";
 }
 
 async function fetchAndUpdateImage() {
-	const today = new Date().toISOString().split("T")[0];
-	const image = await fetchRandomImage();
+	let images = JSON.parse(localStorage.getItem("imagesArray")) || [];
+	let imageIndex = parseInt(localStorage.getItem("imageIndex"), 10) || 0;
+
+	if (images.length === 0 || imageIndex >= images.length - 1) {
+		showLoader();
+		images = await fetchRandomImages();
+		imageIndex = 0;
+		localStorage.setItem("imagesArray", JSON.stringify(images));
+	} else {
+		imageIndex++;
+	}
+
+	localStorage.setItem("imageIndex", imageIndex);
+
+	const image = images[imageIndex];
 	const imageURL = image.urls.full;
 	const photog = image.user.name;
 	const photogLink = image.user.links.html;
 	const location = image.location.name;
-
-	localStorage.setItem("lastImageDate", today);
-	localStorage.setItem("lastImageUrl", imageURL);
-	localStorage.setItem("lastImagePhotog", photog);
-	localStorage.setItem("lastImagePhotogLink", photogLink);
-	localStorage.setItem("lastImageLocation", location);
 
 	const img = new Image();
 	img.src = imageURL;
@@ -122,9 +138,6 @@ async function fetchAndUpdateImage() {
 		document.querySelector(".container").style.display = "block";
 		hideLoader();
 	};
-
-	document.getElementById("loader").classList.remove("hidden");
-	document.querySelector(".container").style.display = "none";
 }
 
 async function fetchAndUpdateQuote() {
@@ -185,9 +198,6 @@ function updateTime() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	hideLoader();
-
-	setInterval(updateTime, 1000);
 	updateTime();
 	updateQuoteAndBackground();
 
