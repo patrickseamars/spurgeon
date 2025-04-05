@@ -5,7 +5,7 @@ exports.handler = async function () {
 		const response = await axios.get("https://api.unsplash.com/photos/random", {
 			params: {
 				query:
-					"landscape, scenery, wilderness, panorama, mountains, alpine, mountain range, mountain vista, river, lake, ocean, waterscape, seascape, forest, woodland, treeline, fjord, valley, canyon, coastal, meadow, scenic landscape, nature panorama, wilderness, mountain forest, river, ocean view",
+					"landscape, wilderness, panorama, mountains, alpine, mountain range, mountain vista, river, lake, ocean, waterscape, seascape, forest, woodland, treeline, fjord, valley, canyon, coastal, meadow, scenic landscape, nature panorama, wilderness, mountain forest, river, ocean view",
 				orientation: "landscape",
 				client_id: process.env.UNSPLASH_API_KEY, // Securely stored in Netlify
 			},
