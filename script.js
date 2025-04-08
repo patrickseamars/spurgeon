@@ -2,7 +2,8 @@ async function fetchQuotes() {
 	try {
 		const response = await fetch("quotes.json");
 		if (!response.ok) throw new Error("Failed to load quotes");
-		return await response.json();
+		const quotes = await response.json();
+		return quotes;
 	} catch (error) {
 		console.error("Error fetching quotes:", error);
 		return [
@@ -22,13 +23,19 @@ async function fetchRandomImages() {
 		return images;
 	} catch (error) {
 		console.error("Error fetching images:", error);
-		return Array(10).fill({
-			urls: {
-				full: "https://via.placeholder.com/1600x900?text=Error+loading+image",
-			},
-			user: { name: "Unknown", links: { html: "#" } },
-			location: { name: "Unknown" },
-		});
+		// Set fallback image directly as the background
+		const fallbackImageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
+		document.getElementById(
+			"background"
+		).style.backgroundImage = `url(${fallbackImageURL})`;
+		document.getElementById("photog").textContent = "Garrett Parker";
+		document.getElementById("photog").href =
+			"https://unsplash.com/@garrettpsystems";
+		document.getElementById("photoLink").href = fallbackImageURL;
+		document.getElementById("location").textContent = "Moraine Lake, Canada";
+
+		// Return an empty array to indicate no images were fetched
+		return [];
 	}
 }
 
@@ -37,6 +44,7 @@ function hideLoader() {
 }
 
 function showLoader() {
+	console.log("Showing loader...");
 	document.getElementById("loader").classList.remove("hidden");
 	document.querySelector(".container").style.display = "none";
 }
@@ -60,7 +68,6 @@ async function updateQuoteAndBackground() {
 	let image, imageURL, photog, photogLink, location;
 
 	if (storedDate === today && storedImages.length > 0) {
-		console.log("Using stored image and quote");
 		image = storedImages[storedImageIndex];
 		imageURL = image.urls.full;
 		photog = image.user.name;
@@ -70,17 +77,27 @@ async function updateQuoteAndBackground() {
 	} else {
 		showLoader();
 		const images = await fetchRandomImages();
-		localStorage.setItem("imagesArray", JSON.stringify(images));
-		localStorage.setItem("imageIndex", 0);
-		image = images[0];
-		imageURL = image.urls.full;
-		photog = image.user.name;
-		photogLink = image.user.links.html;
-		location = image.location.name;
 
-		localStorage.setItem("lastImageDate", today);
-		localStorage.setItem("lastQuote", quote);
-		document.getElementById("quote").textContent = quote;
+		if (images.length > 0) {
+			localStorage.setItem("imagesArray", JSON.stringify(images));
+			localStorage.setItem("imageIndex", 0);
+			image = images[0];
+			imageURL = image.urls.full;
+			photog = image.user.name;
+			photogLink = image.user.links.html;
+			location = image.location.name;
+
+			localStorage.setItem("lastImageDate", today);
+			localStorage.setItem("lastQuote", quote);
+			document.getElementById("quote").textContent = quote;
+		} else {
+			// Handle fallback image
+			imageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
+			photog = "Garrett Parker";
+			photogLink = "https://unsplash.com/@garrettpsystems";
+			location = "Moraine Lake, Canada";
+			document.getElementById("quote").textContent = quote;
+		}
 	}
 
 	const img = new Image();
