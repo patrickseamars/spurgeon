@@ -1,12 +1,21 @@
 {
 	"manifest_version": 3,
 	"name": "A Moment With Spurgeon",
-	"version": "2.2",
+	"version": "2.3",
 	"description": "Displays a Charles Spurgeon quote daily with a beautiful image and the current time as your new tab page.",
 	"icons": {
 		"16": "spurgeon_icon_16.png",
+		"32": "spurgeon_icon_32.png",
 		"48": "spurgeon_icon_48.png",
-		"128": "spurgeon_icon.png"
+		"128": "spurgeon_icon_128.png"
+	},
+	"action": {
+		"default_icon": {
+			"16": "spurgeon_icon_16.png",
+			"32": "spurgeon_icon_32.png",
+			"48": "spurgeon_icon_48.png",
+			"128": "spurgeon_icon_128.png"
+		}
 	},
 	"chrome_url_overrides": {
 		"newtab": "index.html"
