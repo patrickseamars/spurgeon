@@ -1,3 +1,55 @@
+// Loader state management
+let loaderVisible = false;
+const loader = document.getElementById("loader");
+const container = document.querySelector(".container");
+
+// Initialize loader visibility based on localStorage
+function initializeLoader() {
+	const storedDate = localStorage.getItem("lastImageDate");
+	const today = new Date().toISOString().split("T")[0];
+	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
+	
+	// If we have cached images for today, show container immediately
+	if (storedDate === today && storedImages.length > 0) {
+		container.style.display = "block";
+		loader.classList.add("hidden");
+		loaderVisible = false;
+		return;
+	}
+	
+	// Otherwise, show loader
+	loader.classList.add("visible");
+	container.style.display = "none";
+	loaderVisible = true;
+}
+
+// Update loader visibility
+function updateLoader(visible) {
+	loaderVisible = visible;
+	if (visible) {
+		loader.classList.add("visible");
+		loader.classList.remove("hidden");
+		container.style.display = "none";
+	} else {
+		loader.classList.remove("visible");
+		loader.classList.add("hidden");
+		container.style.display = "block";
+	}
+}
+
+// Initialize loader on page load
+initializeLoader();
+
+// Fallback functions for backward compatibility
+function hideLoader() {
+	updateLoader(false);
+}
+
+function showLoader() {
+	updateLoader(true);
+}
+
+// Fetch functions
 async function fetchQuotes() {
 	try {
 		const response = await fetch("quotes.json");
@@ -7,12 +59,13 @@ async function fetchQuotes() {
 	} catch (error) {
 		console.error("Error fetching quotes:", error);
 		return [
-			"A Bible that’s falling apart usually belongs to someone who isn’t.",
+			"A Bible that's falling apart usually belongs to someone who isn't.",
 		];
 	}
 }
 
 async function fetchRandomImages() {
+	updateLoader(true);
 	const url =
 		"https://melodious-dusk-d264c9.netlify.app/.netlify/functions/unsplash";
 	try {
@@ -20,6 +73,7 @@ async function fetchRandomImages() {
 			fetch(url).then((res) => res.json())
 		);
 		const images = await Promise.all(promises);
+		updateLoader(false);
 		return images;
 	} catch (error) {
 		console.error("Error fetching images:", error);
@@ -33,20 +87,9 @@ async function fetchRandomImages() {
 			"https://unsplash.com/@garrettpsystems";
 		document.getElementById("photoLink").href = fallbackImageURL;
 		document.getElementById("location").textContent = "Moraine Lake, Canada";
-
-		// Return an empty array to indicate no images were fetched
+		updateLoader(false);
 		return [];
 	}
-}
-
-function hideLoader() {
-	document.getElementById("loader").classList.add("hidden");
-}
-
-function showLoader() {
-	console.log("Showing loader...");
-	document.getElementById("loader").classList.remove("hidden");
-	document.querySelector(".container").style.display = "none";
 }
 
 async function updateQuoteAndBackground() {
@@ -63,59 +106,75 @@ async function updateQuoteAndBackground() {
 	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
 	const storedImageIndex =
 		parseInt(localStorage.getItem("imageIndex"), 10) || 0;
-	const storedQuote = localStorage.getItem("lastQuote");
-
-	let image, imageURL, photog, photogLink, location;
 
 	if (storedDate === today && storedImages.length > 0) {
-		image = storedImages[storedImageIndex];
-		imageURL = image.urls.full;
-		photog = image.user.name;
-		photogLink = image.user.links.html;
-		location = image.location.name;
-		document.getElementById("quote").textContent = storedQuote || quote;
+		// Use cached image - no need to show loader
+		const image = storedImages[storedImageIndex];
+		const imageURL = image.urls.full;
+		const photog = image.user.name;
+		const photogLink = image.user.links.html;
+		const location = image.location.name;
+
+		const img = new Image();
+		img.src = imageURL;
+		img.onload = () => {
+			document.getElementById(
+				"background"
+			).style.backgroundImage = `url(${imageURL})`;
+			document.getElementById("photog").textContent = photog;
+			document.getElementById(
+				"photog"
+			).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+			document.getElementById("photoLink").href = imageURL;
+			document.getElementById("location").textContent = location;
+
+			// Use requestAnimationFrame to ensure smooth animation
+			requestAnimationFrame(() => {
+				document.querySelector(".container").style.opacity = "1";
+				document.querySelector(".attribution").style.opacity = "1";
+			});
+		};
+		img.onerror = () => {
+			updateLoader(false);
+		};
 	} else {
-		showLoader();
+		// Only show loader when we need to fetch new images
+		updateLoader(true);
 		const images = await fetchRandomImages();
+		const image = images[0];
+		const imageURL = image.urls.full;
+		const photog = image.user.name;
+		const photogLink = image.user.links.html;
+		const location = image.location.name;
 
-		if (images.length > 0) {
-			localStorage.setItem("imagesArray", JSON.stringify(images));
-			localStorage.setItem("imageIndex", 0);
-			image = images[0];
-			imageURL = image.urls.full;
-			photog = image.user.name;
-			photogLink = image.user.links.html;
-			location = image.location.name;
+		localStorage.setItem("imagesArray", JSON.stringify(images));
+		localStorage.setItem("imageIndex", 0);
+		localStorage.setItem("lastImageDate", today);
 
-			localStorage.setItem("lastImageDate", today);
-			localStorage.setItem("lastQuote", quote);
-			document.getElementById("quote").textContent = quote;
-		} else {
-			// Handle fallback image
-			imageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
-			photog = "Garrett Parker";
-			photogLink = "https://unsplash.com/@garrettpsystems";
-			location = "Moraine Lake, Canada";
-			document.getElementById("quote").textContent = quote;
-		}
+		const img = new Image();
+		img.src = imageURL;
+		img.onload = () => {
+			document.getElementById(
+				"background"
+			).style.backgroundImage = `url(${imageURL})`;
+			document.getElementById("photog").textContent = photog;
+			document.getElementById(
+				"photog"
+			).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+			document.getElementById("photoLink").href = imageURL;
+			document.getElementById("location").textContent = location;
+			updateLoader(false);
+			// Use requestAnimationFrame to ensure smooth animation
+			requestAnimationFrame(() => {
+				document.querySelector(".container").style.opacity = "1";
+				document.querySelector(".attribution").style.opacity = "1";
+			});
+		};
+		img.onerror = () => {
+			updateLoader(false);
+		};
 	}
-
-	const img = new Image();
-	img.src = imageURL;
-	img.onload = () => {
-		document.getElementById(
-			"background"
-		).style.backgroundImage = `url(${imageURL})`;
-		document.getElementById("photog").textContent = photog;
-		document.getElementById(
-			"photog"
-		).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
-		document.getElementById("photoLink").href = imageURL;
-		document.getElementById("location").textContent = location;
-
-		document.querySelector(".container").style.display = "block";
-		hideLoader(); // Ensure loader is hidden after initial image load
-	};
+	document.getElementById("quote").textContent = quote;
 }
 
 async function fetchAndUpdateImage() {
@@ -214,9 +273,66 @@ function updateTime() {
 	}
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-	updateTime();
-	updateQuoteAndBackground();
+// Preload image and check for cached data
+async function preloadImage() {
+	const today = new Date().toISOString().split("T")[0];
+	const storedDate = localStorage.getItem("lastImageDate");
+	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
+	const storedImageIndex = parseInt(localStorage.getItem("imageIndex"), 10) || 0;
+	const background = document.getElementById("background");
+
+	if (storedDate === today && storedImages.length > 0) {
+		// Use cached image
+		const image = storedImages[storedImageIndex];
+		const imageURL = image.urls.full;
+
+		// Preload the image
+		const img = new Image();
+		img.src = imageURL;
+		img.onload = () => {
+			// Set background image immediately
+			background.style.backgroundImage = `url(${imageURL})`;
+			// Force immediate background display
+			background.style.opacity = "1";
+			// Show container with opacity transition
+			requestAnimationFrame(() => {
+				document.querySelector(".container").style.opacity = "1";
+				document.querySelector(".attribution").style.opacity = "1";
+			});
+		};
+		img.onerror = () => {
+			// If cached image fails to load, use fallback
+			const fallbackImageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
+			background.style.backgroundImage = `url(${fallbackImageURL})`;
+			// Force immediate background display
+			background.style.opacity = "1";
+		};
+		return true;
+	}
+	return false;
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+	// First try to preload cached image
+	const hasCachedImage = await preloadImage();
+
+	if (!hasCachedImage) {
+		// If no cached image, show loader and fetch new image
+		updateLoader(true);
+		updateTime();
+		await updateQuoteAndBackground();
+	} else {
+		// If we have cached image, just update time and quote
+		updateTime();
+		const quotes = await fetchQuotes();
+		const now = new Date();
+		const start = new Date(now.getFullYear(), 0, 0);
+		const diff = now - start;
+		const oneDay = 1000 * 60 * 60 * 24;
+		const dayOfYear = Math.floor(diff / oneDay);
+		const quote = quotes[dayOfYear % quotes.length];
+		document.getElementById("quote").textContent = quote;
+	}
 
 	const format12hr = document.getElementById("format12hr");
 	const format24hr = document.getElementById("format24hr");
