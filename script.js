@@ -2,6 +2,7 @@
 let loaderVisible = false;
 const loader = document.getElementById("loader");
 const container = document.querySelector(".container");
+const backgroundDiv = document.querySelector(".background");
 
 // Initialize loader visibility based on localStorage
 function initializeLoader() {
@@ -12,41 +13,98 @@ function initializeLoader() {
 	// If we have cached images for today, show container immediately
 	if (storedDate === today && storedImages.length > 0) {
 		container.style.display = "block";
-		loader.classList.add("hidden");
+		container.style.opacity = "1";
+		loader.style.display = "none";
 		loaderVisible = false;
+		loadBackgroundImage();
 		return;
 	}
 	
 	// Otherwise, show loader
-	loader.classList.add("visible");
+	loader.style.display = "flex";
 	container.style.display = "none";
 	loaderVisible = true;
+	loadBackgroundImage();
 }
 
 // Update loader visibility
 function updateLoader(visible) {
-	loaderVisible = visible;
 	if (visible) {
-		loader.classList.add("visible");
-		loader.classList.remove("hidden");
+		loader.style.display = "flex";
 		container.style.display = "none";
+		loaderVisible = true;
 	} else {
-		loader.classList.remove("visible");
-		loader.classList.add("hidden");
+		loader.style.display = "none";
 		container.style.display = "block";
+		loaderVisible = false;
 	}
 }
 
-// Initialize loader on page load
-initializeLoader();
+// Load background image and fade it in when ready
+async function loadBackgroundImage() {
+	try {
+		const storedDate = localStorage.getItem("lastImageDate");
+		const today = new Date().toISOString().split("T")[0];
+		const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
+		
+		// If we have cached images for today
+		if (storedDate === today && storedImages.length > 0) {
+			const randomImage = storedImages[Math.floor(Math.random() * storedImages.length)];
+			applyBackgroundImage(randomImage);
+			return;
+		}
+		
+		// Show loader before fetching new images
+		updateLoader(true);
+		
+		// Otherwise, fetch new images
+		const images = await fetchRandomImages();
+		if (images.length > 0) {
+			const randomImage = images[Math.floor(Math.random() * images.length)];
+			applyBackgroundImage(randomImage);
+		}
+	} catch (error) {
+		console.error("Error loading background image:", error);
+		// Apply fallback image
+		const fallbackImageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
+		applyBackgroundImage({
+			url: fallbackImageURL,
+			photographer: "Garrett Parker",
+			photographerUrl: "https://unsplash.com/@garrettpsystems",
+			location: "Moraine Lake, Canada"
+		});
+	}
+}
+
+// Apply background image with fade-in animation
+function applyBackgroundImage(imageData) {
+	// Store the image data
+	localStorage.setItem("lastImageDate", new Date().toISOString().split("T")[0]);
+	localStorage.setItem("imagesArray", JSON.stringify([imageData]));
+	
+	// Set background image
+	backgroundDiv.style.backgroundImage = `url(${imageData.url})`;
+	
+	// Fade in the background
+	backgroundDiv.style.opacity = "0";
+	backgroundDiv.style.display = "block";
+	setTimeout(() => {
+		backgroundDiv.style.opacity = "1";
+		updateLoader(false);
+	}, 100); // Small delay to ensure transition works
+}
 
 // Fallback functions for backward compatibility
 function hideLoader() {
-	updateLoader(false);
+	loader.style.display = "none";
+	container.style.display = "block";
+	loaderVisible = false;
 }
 
 function showLoader() {
-	updateLoader(true);
+	loader.style.display = "flex";
+	container.style.display = "none";
+	loaderVisible = true;
 }
 
 // Fetch functions
@@ -65,7 +123,6 @@ async function fetchQuotes() {
 }
 
 async function fetchRandomImages() {
-	updateLoader(true);
 	const url =
 		"https://melodious-dusk-d264c9.netlify.app/.netlify/functions/unsplash";
 	try {
@@ -73,22 +130,10 @@ async function fetchRandomImages() {
 			fetch(url).then((res) => res.json())
 		);
 		const images = await Promise.all(promises);
-		updateLoader(false);
 		return images;
 	} catch (error) {
 		console.error("Error fetching images:", error);
-		// Set fallback image directly as the background
-		const fallbackImageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
-		document.getElementById(
-			"background"
-		).style.backgroundImage = `url(${fallbackImageURL})`;
-		document.getElementById("photog").textContent = "Garrett Parker";
-		document.getElementById("photog").href =
-			"https://unsplash.com/@garrettpsystems";
-		document.getElementById("photoLink").href = fallbackImageURL;
-		document.getElementById("location").textContent = "Moraine Lake, Canada";
-		updateLoader(false);
-		return [];
+		throw error;
 	}
 }
 
@@ -118,13 +163,11 @@ async function updateQuoteAndBackground() {
 		const img = new Image();
 		img.src = imageURL;
 		img.onload = () => {
-			document.getElementById(
-				"background"
-			).style.backgroundImage = `url(${imageURL})`;
+			document.getElementById("background").style.backgroundImage =
+				`url(${imageURL})`;
 			document.getElementById("photog").textContent = photog;
-			document.getElementById(
-				"photog"
-			).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+			document.getElementById("photog").href =
+				`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
 			document.getElementById("photoLink").href = imageURL;
 			document.getElementById("location").textContent = location;
 
@@ -154,13 +197,11 @@ async function updateQuoteAndBackground() {
 		const img = new Image();
 		img.src = imageURL;
 		img.onload = () => {
-			document.getElementById(
-				"background"
-			).style.backgroundImage = `url(${imageURL})`;
+			document.getElementById("background").style.backgroundImage =
+				`url(${imageURL})`;
 			document.getElementById("photog").textContent = photog;
-			document.getElementById(
-				"photog"
-			).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+			document.getElementById("photog").href =
+				`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
 			document.getElementById("photoLink").href = imageURL;
 			document.getElementById("location").textContent = location;
 			updateLoader(false);
@@ -201,13 +242,11 @@ async function fetchAndUpdateImage() {
 	const img = new Image();
 	img.src = imageURL;
 	img.onload = () => {
-		document.getElementById(
-			"background"
-		).style.backgroundImage = `url(${imageURL})`;
+		document.getElementById("background").style.backgroundImage =
+			`url(${imageURL})`;
 		document.getElementById("photog").textContent = photog;
-		document.getElementById(
-			"photog"
-		).href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+		document.getElementById("photog").href =
+			`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
 		document.getElementById("photoLink").href = imageURL;
 		document.getElementById("location").textContent = location;
 
@@ -244,9 +283,8 @@ function updateTime() {
 	} else {
 		const period = hours >= 12 ? "PM" : "AM";
 		hours = hours % 12 || 12;
-		document.getElementById(
-			"time"
-		).textContent = `${hours}:${minutes} ${period}`;
+		document.getElementById("time").textContent =
+			`${hours}:${minutes} ${period}`;
 	}
 
 	const displayHours = now.getHours();
@@ -261,9 +299,8 @@ function updateTime() {
 
 	const userName = localStorage.getItem("userName");
 	if (userName) {
-		document.getElementById(
-			"timeOfDay"
-		).textContent = `${timeOfDay}, ${userName}`;
+		document.getElementById("timeOfDay").textContent =
+			`${timeOfDay}, ${userName}`;
 		document.getElementById("userNamePrompt").style.display = "none";
 		document.getElementById("userNameInput").style.display = "none";
 	} else {
@@ -278,7 +315,8 @@ async function preloadImage() {
 	const today = new Date().toISOString().split("T")[0];
 	const storedDate = localStorage.getItem("lastImageDate");
 	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
-	const storedImageIndex = parseInt(localStorage.getItem("imageIndex"), 10) || 0;
+	const storedImageIndex =
+		parseInt(localStorage.getItem("imageIndex"), 10) || 0;
 	const background = document.getElementById("background");
 
 	if (storedDate === today && storedImages.length > 0) {

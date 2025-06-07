@@ -8,17 +8,32 @@ body {
 	background: transparent;
 }
 
+.background {
+	background-size: cover;
+	background-position: center;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	width: 100%;
+	height: 100%;
+	z-index: -1;
+	filter: brightness(0.5);
+	opacity: 0; /* Start hidden */
+	transition: opacity 2s ease-in-out;
+}
+
 #loader {
 	position: fixed;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	z-index: 1000;
-	background: rgb(220 216 210);
 	width: 100%;
 	height: 100%;
-	display: flex;
-	flex-direction: column; /* Display images and text in a column */
+	display: none;
+	flex-direction: column;
 	justify-content: center;
 	align-items: center;
 }
@@ -50,7 +65,7 @@ body {
 }
 
 #loader .loading-text {
-	color: black;
+	color: rgb(220 216 210);
 	font-size: 1.5rem;
 	margin-top: 20px;
 	width: 100%; /* Ensure the text takes full width */
@@ -68,15 +83,14 @@ body {
 	margin: 50px;
 }
 .container {
-	transition: opacity 0.3s ease-in-out;
 	font-size: 2.5rem;
+	color: black;
+	animation: fadeToWhite 1.5s ease-in-out forwards;
 	margin: 0;
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	opacity: 0; /* Start hidden */
-	animation: fadeIn 1s forwards 0.25s; /* Apply fade-in animation with delay */
 }
 .greeting {
 	margin: 100px auto;
@@ -84,6 +98,7 @@ body {
 .quote-block {
 	font-size: 2rem;
 	max-width: 80%;
+	min-height: 100px;
 	left: 50%;
 	margin: 30px auto;
 }
@@ -116,19 +131,6 @@ a#photoLink {
 	color: #a19d9d;
 }
 
-.background {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: -1;
-	background-size: cover;
-	background-position: center;
-	filter: brightness(0.5);
-	opacity: 0; /* Start hidden */
-	animation: fadeIn 2s forwards 0.25s; /* Apply fade-in animation with delay */
-}
 @keyframes fadeIn {
 	to {
 		opacity: 1;
@@ -147,6 +149,15 @@ a#photoLink {
 	}
 	100% {
 		content: "Loading...";
+	}
+}
+
+@keyframes fadeToWhite {
+	from {
+		color: rgba(0, 0, 0, 0.753);
+	}
+	to {
+		color: rgb(220 216 210);
 	}
 }
 
@@ -212,7 +223,9 @@ a#photoLink {
 	height: 100%;
 	background-color: #4caf50;
 	border-radius: 18px;
-	transition: transform 0.3s ease, background-color 0.3s ease;
+	transition:
+		transform 0.3s ease,
+		background-color 0.3s ease;
 	z-index: 1;
 }
 
