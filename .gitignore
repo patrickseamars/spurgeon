@@ -12,3 +12,5 @@ functions/node_modules/
 
 # Local build
 *.zip
+Version Files/
+*.zip
