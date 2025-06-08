@@ -1,8 +1,8 @@
 {
 	"manifest_version": 3,
 	"name": "A Moment With Spurgeon",
-	"version": "2.3",
-	"description": "Displays a Charles Spurgeon quote daily with a beautiful image and the current time as your new tab page.",
+	"version": "3.0.0",
+	"description": "Displays a Charles Spurgeon quote, and access to a daily devotional beset with a beautiful image and the current time as your new tab page.",
 	"icons": {
 		"16": "spurgeon_icon_16.png",
 		"32": "spurgeon_icon_32.png",
