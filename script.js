@@ -9,7 +9,7 @@ function initializeLoader() {
 	const storedDate = localStorage.getItem("lastImageDate");
 	const today = new Date().toISOString().split("T")[0];
 	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
-	
+
 	// If we have cached images for today, show container immediately
 	if (storedDate === today && storedImages.length > 0) {
 		container.style.display = "block";
@@ -19,7 +19,7 @@ function initializeLoader() {
 		loadBackgroundImage();
 		return;
 	}
-	
+
 	// Otherwise, show loader
 	loader.style.display = "flex";
 	container.style.display = "none";
@@ -46,17 +46,18 @@ async function loadBackgroundImage() {
 		const storedDate = localStorage.getItem("lastImageDate");
 		const today = new Date().toISOString().split("T")[0];
 		const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
-		
+
 		// If we have cached images for today
 		if (storedDate === today && storedImages.length > 0) {
-			const randomImage = storedImages[Math.floor(Math.random() * storedImages.length)];
+			const randomImage =
+				storedImages[Math.floor(Math.random() * storedImages.length)];
 			applyBackgroundImage(randomImage);
 			return;
 		}
-		
+
 		// Show loader before fetching new images
 		updateLoader(true);
-		
+
 		// Otherwise, fetch new images
 		const images = await fetchRandomImages();
 		if (images.length > 0) {
@@ -71,7 +72,7 @@ async function loadBackgroundImage() {
 			url: fallbackImageURL,
 			photographer: "Garrett Parker",
 			photographerUrl: "https://unsplash.com/@garrettpsystems",
-			location: "Moraine Lake, Canada"
+			location: "Moraine Lake, Canada",
 		});
 	}
 }
@@ -81,10 +82,10 @@ function applyBackgroundImage(imageData) {
 	// Store the image data
 	localStorage.setItem("lastImageDate", new Date().toISOString().split("T")[0]);
 	localStorage.setItem("imagesArray", JSON.stringify([imageData]));
-	
+
 	// Set background image
 	backgroundDiv.style.backgroundImage = `url(${imageData.url})`;
-	
+
 	// Fade in the background
 	backgroundDiv.style.opacity = "0";
 	backgroundDiv.style.display = "block";
@@ -110,7 +111,7 @@ function showLoader() {
 // Fetch functions
 async function fetchQuotes() {
 	try {
-		const response = await fetch("quotes.json");
+		const response = await fetch("data/quotes.json");
 		if (!response.ok) throw new Error("Failed to load quotes");
 		const quotes = await response.json();
 		return quotes;
@@ -119,6 +120,84 @@ async function fetchQuotes() {
 		return [
 			"A Bible that's falling apart usually belongs to someone who isn't.",
 		];
+	}
+}
+
+async function fetchDevotionals() {
+	try {
+		const response = await fetch("data/morning_and_evening.json");
+		if (!response.ok) throw new Error("Failed to load devotionals");
+		const devotionals = await response.json();
+		return devotionals;
+	} catch (error) {
+		console.error("Error fetching devotionals:", error);
+		return null;
+	}
+}
+
+async function updateDevotional() {
+	try {
+		const response = await fetch("data/morning_and_evening.json");
+		if (!response.ok) {
+			throw new Error("Failed to fetch devotionals");
+		}
+		const devotionals = await response.json();
+
+		const now = new Date();
+		const isEvening = now.getHours() >= 17; // After 5pm
+
+		// Convert current date to "Month Day" format
+		const months = [
+			"January",
+			"February",
+			"March",
+			"April",
+			"May",
+			"June",
+			"July",
+			"August",
+			"September",
+			"October",
+			"November",
+			"December",
+		];
+		const dateKey = `${months[now.getMonth()]} ${now.getDate()}`;
+
+		// Find today's devotional
+		const todayDevotional = devotionals.find((d) => d.date === dateKey);
+
+		if (!todayDevotional) {
+			throw new Error("No devotional found for today");
+		}
+
+		// Select morning or evening devotional
+		const devotional = isEvening
+			? todayDevotional.evening
+			: todayDevotional.morning;
+
+		// Update the DOM
+		const devotionalContent = document.getElementById("devotionalContent");
+		if (!devotionalContent) {
+			throw new Error("Devotional content element not found");
+		}
+
+		devotionalContent.innerHTML = `
+			<h2>${dateKey}</h2>
+			<h3 class="devotional-date">${isEvening ? "Evening" : "Morning"} Devotional</h3>
+			<blockquote class="devotional-verse"><em>${devotional.verse}</em></blockquote>
+			<hr style="border: 1px solid #ccc; width: 50%;">
+			<p class="devotional-text">${devotional.content}</p>
+		`;
+	} catch (error) {
+		console.error("Error updating devotional:", error);
+		// Show fallback content
+		const devotionalContent = document.getElementById("devotionalContent");
+		if (devotionalContent) {
+			devotionalContent.innerHTML = `
+				<h2>Devotional Temporarily Unavailable</h2>
+				<p>Please try again later. If the problem persists, you may need to refresh the page.</p>
+			`;
+		}
 	}
 }
 
@@ -291,6 +370,7 @@ function updateTime() {
 
 	if (displayHours >= 17) {
 		timeOfDay = "Good Evening";
+		isEvening = true;
 	} else if (displayHours >= 12) {
 		timeOfDay = "Good Afternoon";
 	} else {
@@ -350,6 +430,135 @@ async function preloadImage() {
 	return false;
 }
 
+async function init() {
+	initializeLoader();
+	await loadBackgroundImage();
+	updateTime();
+	updateQuote();
+	updateDevotional();
+
+	// Set up time update intervals
+	setInterval(updateTime, 1000);
+	setInterval(updateQuote, 3600000); // Update every hour
+	setInterval(updateDevotional, 3600000); // Update every hour
+
+	// Initialize devotional drawer
+	initializeDevotionalDrawer();
+}
+
+function initializeDevotionalDrawer() {
+	const devotionalToggle = document.getElementById("devotionalToggle");
+	const devotionalDrawer = document.getElementById("devotionalDrawer");
+	const closeDrawer = document.getElementById("closeDrawer");
+	const favoriteDevotional = document.getElementById("favoriteDevotional");
+
+	// Initialize drawer state
+	devotionalDrawer.style.display = "none";
+	devotionalDrawer.style.position = "fixed";
+	devotionalDrawer.style.bottom = "30px";
+	devotionalDrawer.style.left = "50%";
+	devotionalDrawer.style.transform = "translate(-50%, 0%)";
+	devotionalDrawer.style.zIndex = "1000";
+	devotionalDrawer.style.transition = "all 0.3s ease";
+	devotionalDrawer.style.background = "rgba(0, 0, 0, 0.8)";
+	devotionalDrawer.style.overflow = "hidden";
+	devotionalDrawer.style.height = "0";
+
+	// Toggle drawer
+	devotionalToggle.addEventListener("click", () => {
+		if (devotionalDrawer.style.display === "none") {
+			devotionalDrawer.style.display = "block";
+			setTimeout(() => {
+				devotionalDrawer.style.height = "70vh";
+				devotionalDrawer.style.width = "70%";
+			}, 10);
+		} else {
+			devotionalDrawer.style.height = "0";
+			setTimeout(() => {
+				devotionalDrawer.style.display = "none";
+			}, 300);
+		}
+	});
+
+	// Close drawer
+	closeDrawer.addEventListener("click", () => {
+		devotionalDrawer.style.height = "0";
+		setTimeout(() => {
+			devotionalDrawer.style.display = "none";
+		}, 300);
+	});
+
+	// Handle click outside drawer
+	document.addEventListener("click", (e) => {
+		if (
+			!devotionalDrawer.contains(e.target) &&
+			!devotionalToggle.contains(e.target)
+		) {
+			devotionalDrawer.style.height = "0";
+			setTimeout(() => {
+				devotionalDrawer.style.display = "none";
+			}, 300);
+		}
+	});
+
+	// Handle favorite devotional
+	favoriteDevotional.addEventListener("click", () => {
+		const currentDevotional = localStorage.getItem("currentDevotional");
+		if (!currentDevotional) return;
+
+		const favorites = JSON.parse(
+			localStorage.getItem("favoriteDevotionals") || "[]"
+		);
+		const parsedCurrent = JSON.parse(currentDevotional);
+		const isFavorited = favorites.some((f) => f.date === parsedCurrent.date);
+
+		if (isFavorited) {
+			// Remove from favorites
+			const updatedFavorites = favorites.filter(
+				(f) => f.date !== parsedCurrent.date
+			);
+			localStorage.setItem(
+				"favoriteDevotionals",
+				JSON.stringify(updatedFavorites)
+			);
+			favoriteDevotional.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.32 8.044a4.496 4.496 0 0 1 1.495 4.458A4.496 4.496 0 0 1 12 17a4.496 4.496 0 0 1-3.82-2.5A4.496 4.496 0 0 1 12 8c1.657 0 3.073.99 3.82 2.454a4.5 4.5 0 0 1 .527.026z" />
+                </svg>
+                Favorite
+            `;
+		} else {
+			// Add to favorites
+			favorites.push(parsedCurrent);
+			localStorage.setItem("favoriteDevotionals", JSON.stringify(favorites));
+			favoriteDevotional.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                    <path d="M14.32 8.044a4.496 4.496 0 0 1 1.495 4.458A4.496 4.496 0 0 1 12 17a4.496 4.496 0 0 1-3.82-2.5A4.496 4.496 0 0 1 12 8c1.657 0 3.073.99 3.82 2.454a4.5 4.5 0 0 1 .527.026z" />
+                </svg>
+                Favorited
+            `;
+		}
+	});
+}
+
+// Add this function before the init() function
+async function updateQuote() {
+	const quotes = await fetchQuotes();
+	const now = new Date();
+	const start = new Date(now.getFullYear(), 0, 0);
+	const diff = now - start;
+	const oneDay = 1000 * 60 * 60 * 24;
+	const dayOfYear = Math.floor(diff / oneDay);
+	const quote = quotes[dayOfYear % quotes.length];
+
+	if (quote) {
+		document.getElementById("quote").textContent = quote;
+		localStorage.setItem("lastQuote", quote);
+	}
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
 document.addEventListener("DOMContentLoaded", async () => {
 	// First try to preload cached image
 	const hasCachedImage = await preloadImage();
@@ -357,18 +566,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 	if (!hasCachedImage) {
 		// If no cached image, show loader and fetch new image
 		updateLoader(true);
-		updateTime();
 		await updateQuoteAndBackground();
 	} else {
 		// If we have cached image, just update time and quote
 		updateTime();
-		const quotes = await fetchQuotes();
-		const now = new Date();
-		const start = new Date(now.getFullYear(), 0, 0);
-		const diff = now - start;
-		const oneDay = 1000 * 60 * 60 * 24;
-		const dayOfYear = Math.floor(diff / oneDay);
-		const quote = quotes[dayOfYear % quotes.length];
+		updateQuote();
 		document.getElementById("quote").textContent = quote;
 	}
 

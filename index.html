@@ -28,15 +28,16 @@
 		<div class="background" id="background"></div>
 		<div class="container">
 			<div class="time" id="time"></div>
-
-			<div class="greeting">
-				<span id="timeOfDay"></span>
-				<span id="userNamePrompt">, what's your name?</span>
-				<input type="text" id="userNameInput" placeholder="Enter your name" />
-			</div>
-			<div class="quote-block">
-				<p id="quote"></p>
-				<p>~ Charles Spurgeon</p>
+			<div class="content">
+				<div class="greeting">
+					<span id="timeOfDay"></span>
+					<span id="userNamePrompt">, what's your name?</span>
+					<input type="text" id="userNameInput" placeholder="Enter your name" />
+				</div>
+				<div class="quote-block">
+					<p id="quote"></p>
+					<p>~ Charles Spurgeon</p>
+				</div>
 			</div>
 		</div>
 		<div class="attribution" style="opacity: 0">
@@ -49,7 +50,43 @@
 			</a>
 			<p id="location"></p>
 		</div>
+		<div id="devotionalDrawer" class="drawer">
+			<div class="drawer-header">
+				<div class="drawer-title">
+					Charles Spurgeon's Morning and Evening devotional.
+				</div>
+				<button id="closeDrawer" class="close-button">
+					<svg
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+					>
+						<path d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
+			</div>
+			<div class="drawer-content-container">
+				<div id="devotionalContent" class="devotional-content">
+					<!-- Content will be populated by JavaScript -->
+				</div>
+			</div>
+		</div>
 		<div class="toggle-container">
+			<button id="devotionalToggle" class="drawer-toggle">
+				<span class="drawer-label">Devotional</span>
+				<svg
+					class="drawer-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<polyline points="6 9 12 15 18 9" />
+				</svg>
+			</button>
 			<div class="toggle-wrapper">
 				<input type="radio" name="timeFormat" id="format12hr" value="12hr" />
 				<input

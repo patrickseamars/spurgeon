@@ -1,11 +1,163 @@
 body {
-	font-family: Arial, sans-serif;
+	font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 	margin: 0;
 	padding: 0;
 	text-align: center;
 	color: #fff;
 	overflow: hidden;
 	background: transparent;
+}
+
+/* Devotional Drawer Styles */
+.drawer-toggle {
+	padding: 8px 14px;
+	background: #4caf50;
+	border: none;
+	border-radius: 18px;
+	color: white;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	width: 120px;
+	height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 14px;
+	margin: 0 4px;
+}
+
+.drawer-toggle:hover {
+	background: #45a049;
+}
+
+.drawer-toggle .drawer-label {
+	margin-right: 8px;
+	color: white;
+}
+
+.drawer-toggle .drawer-icon {
+	width: 16px;
+	height: 16px;
+	stroke: white;
+	transition: transform 0.3s ease;
+}
+
+.drawer {
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	height: 0;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.8);
+	z-index: 1000;
+	transition: height 0.3s ease;
+	display: flex;
+	flex-direction: column;
+}
+
+.drawer.open {
+	height: 75vh;
+	width: 70%;
+	min-width: 300px;
+}
+
+.drawer-content {
+	padding: 20px;
+	height: 100%;
+	overflow-y: auto;
+}
+
+.drawer-content-container {
+	flex: 1;
+	overflow-y: auto;
+	padding: 20px;
+}
+
+.drawer-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 20px;
+	background: rgba(0, 0, 0, 0.5);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	position: sticky;
+	top: 0;
+	z-index: 2;
+}
+
+.drawer-title {
+	font-size: 1.25rem;
+	font-weight: bold;
+	color: #fff;
+}
+
+.close-button {
+	background: none;
+	border: none;
+	color: #fff;
+	cursor: pointer;
+	padding: 5px;
+}
+
+.close-button svg {
+	width: 20px;
+	height: 20px;
+}
+
+.devotional-content {
+	padding: 20px;
+	color: #fff;
+	overflow-y: auto;
+	max-height: calc(70vh - 60px); /* Account for header height */
+	flex: 1;
+}
+
+.devotional-date {
+	font-size: 1.2rem;
+	margin-bottom: 20px;
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.devotional-verse {
+	font-style: italic;
+	font-size: 1.5rem;
+	margin-bottom: 20px;
+	text-align: left;
+	color: #fff;
+}
+
+.devotional-text {
+	font-size: 1.25rem;
+	line-height: 1.5;
+	text-align: left;
+	color: #fff;
+	margin-bottom: 100px;
+}
+
+.devotional-actions {
+	margin-top: 20px;
+	text-align: right;
+}
+
+.action-button {
+	padding: 8px 16px;
+	background: rgba(255, 255, 255, 0.1);
+	border: none;
+	border-radius: 5px;
+	color: #fff;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.action-button:hover {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.action-button svg {
+	width: 16px;
+	height: 16px;
+	margin-right: 5px;
 }
 
 .background {
@@ -283,4 +435,35 @@ input#format24hr:checked ~ .right {
 
 #userNameInput::placeholder {
 	color: #fff;
+}
+
+/* Style scrollbar for better visibility */
+.drawer-content-container::-webkit-scrollbar {
+	width: 8px;
+}
+
+.drawer-content-container::-webkit-scrollbar-track {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+.drawer-content-container::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+}
+
+.drawer-content-container::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.5);
+}
+
+/* Update drawer toggle icon styles */
+.drawer-toggle .drawer-icon {
+	width: 16px;
+	height: 16px;
+	stroke: white;
+	transition: transform 0.3s ease;
+}
+
+/* New selector for the open state */
+body:has(.drawer.open) .drawer-toggle .drawer-icon {
+	transform: rotate(180deg);
 }
