@@ -590,6 +590,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 	} else {
 		console.error("User name input not found");
 	}
+
+	// Set favicon dynamically
+	const favicon = document.getElementById("favicon");
+	if (favicon) {
+		favicon.href = chrome.runtime.getURL("icons/icon16.png");
+	}
 });
 
 function safeGetStorage(key, defaultValue = null) {
