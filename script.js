@@ -66,15 +66,20 @@ async function loadBackgroundImage() {
 		}
 	} catch (error) {
 		console.error("Error loading background image:", error);
-		// Apply fallback image
-		const fallbackImageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
-		applyBackgroundImage({
-			url: fallbackImageURL,
-			photographer: "Garrett Parker",
-			photographerUrl: "https://unsplash.com/@garrettpsystems",
-			location: "Moraine Lake, Canada",
-		});
+		applyFallbackImage();
 	}
+}
+
+function applyFallbackImage() {
+	const fallbackImageURL = chrome.runtime.getURL(
+		"garrett-parker-DlkF4-dbCOU-unsplash.jpg"
+	);
+	applyBackgroundImage({
+		url: fallbackImageURL,
+		photographer: "Garrett Parker",
+		photographerUrl: "https://unsplash.com/@garrettpsystems",
+		location: "Moraine Lake, Canada",
+	});
 }
 
 // Apply background image with fade-in animation
@@ -392,42 +397,25 @@ function updateTime() {
 
 // Preload image and check for cached data
 async function preloadImage() {
-	const today = new Date().toISOString().split("T")[0];
-	const storedDate = localStorage.getItem("lastImageDate");
-	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
-	const storedImageIndex =
-		parseInt(localStorage.getItem("imageIndex"), 10) || 0;
-	const background = document.getElementById("background");
+	try {
+		const storedImages = JSON.parse(localStorage.getItem("images") || "[]");
+		const today = new Date().toDateString();
+		const storedDate = localStorage.getItem("imageDate");
 
-	if (storedDate === today && storedImages.length > 0) {
-		// Use cached image
-		const image = storedImages[storedImageIndex];
-		const imageURL = image.urls.full;
+		if (storedDate === today && storedImages.length > 0) {
+			const img = new Image();
+			img.src = storedImages[0]?.urls?.regular || "";
 
-		// Preload the image
-		const img = new Image();
-		img.src = imageURL;
-		img.onload = () => {
-			// Set background image immediately
-			background.style.backgroundImage = `url(${imageURL})`;
-			// Force immediate background display
-			background.style.opacity = "1";
-			// Show container with opacity transition
-			requestAnimationFrame(() => {
-				document.querySelector(".container").style.opacity = "1";
-				document.querySelector(".attribution").style.opacity = "1";
-			});
-		};
-		img.onerror = () => {
-			// If cached image fails to load, use fallback
-			const fallbackImageURL = "./garrett-parker-DlkF4-dbCOU-unsplash.jpg";
-			background.style.backgroundImage = `url(${fallbackImageURL})`;
-			// Force immediate background display
-			background.style.opacity = "1";
-		};
-		return true;
+			img.onerror = () => {
+				background.style.opacity = "1";
+			};
+			return true;
+		}
+		return false;
+	} catch (error) {
+		console.error("Error in preloadImage:", error);
+		return false;
 	}
-	return false;
 }
 
 async function init() {
@@ -450,14 +438,19 @@ function initializeDevotionalDrawer() {
 	const devotionalToggle = document.getElementById("devotionalToggle");
 	const devotionalDrawer = document.getElementById("devotionalDrawer");
 	const closeDrawer = document.getElementById("closeDrawer");
-	const favoriteDevotional = document.getElementById("favoriteDevotional");
+
+	// Guard clause to prevent errors if elements don't exist
+	if (!devotionalToggle || !devotionalDrawer || !closeDrawer) {
+		console.error("Required drawer elements not found");
+		return;
+	}
 
 	// Initialize drawer state
 	devotionalDrawer.style.display = "none";
 	devotionalDrawer.style.position = "fixed";
-	devotionalDrawer.style.bottom = "30px";
-	devotionalDrawer.style.left = "50%";
-	devotionalDrawer.style.transform = "translate(-50%, 0%)";
+	devotionalDrawer.style.bottom = "0";
+	devotionalDrawer.style.left = "0";
+	devotionalDrawer.style.right = "0";
 	devotionalDrawer.style.zIndex = "1000";
 	devotionalDrawer.style.transition = "all 0.3s ease";
 	devotionalDrawer.style.background = "rgba(0, 0, 0, 0.8)";
@@ -470,7 +463,6 @@ function initializeDevotionalDrawer() {
 			devotionalDrawer.style.display = "block";
 			setTimeout(() => {
 				devotionalDrawer.style.height = "70vh";
-				devotionalDrawer.style.width = "70%";
 			}, 10);
 		} else {
 			devotionalDrawer.style.height = "0";
@@ -500,45 +492,6 @@ function initializeDevotionalDrawer() {
 			}, 300);
 		}
 	});
-
-	// Handle favorite devotional
-	favoriteDevotional.addEventListener("click", () => {
-		const currentDevotional = localStorage.getItem("currentDevotional");
-		if (!currentDevotional) return;
-
-		const favorites = JSON.parse(
-			localStorage.getItem("favoriteDevotionals") || "[]"
-		);
-		const parsedCurrent = JSON.parse(currentDevotional);
-		const isFavorited = favorites.some((f) => f.date === parsedCurrent.date);
-
-		if (isFavorited) {
-			// Remove from favorites
-			const updatedFavorites = favorites.filter(
-				(f) => f.date !== parsedCurrent.date
-			);
-			localStorage.setItem(
-				"favoriteDevotionals",
-				JSON.stringify(updatedFavorites)
-			);
-			favoriteDevotional.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14.32 8.044a4.496 4.496 0 0 1 1.495 4.458A4.496 4.496 0 0 1 12 17a4.496 4.496 0 0 1-3.82-2.5A4.496 4.496 0 0 1 12 8c1.657 0 3.073.99 3.82 2.454a4.5 4.5 0 0 1 .527.026z" />
-                </svg>
-                Favorite
-            `;
-		} else {
-			// Add to favorites
-			favorites.push(parsedCurrent);
-			localStorage.setItem("favoriteDevotionals", JSON.stringify(favorites));
-			favoriteDevotional.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
-                    <path d="M14.32 8.044a4.496 4.496 0 0 1 1.495 4.458A4.496 4.496 0 0 1 12 17a4.496 4.496 0 0 1-3.82-2.5A4.496 4.496 0 0 1 12 8c1.657 0 3.073.99 3.82 2.454a4.5 4.5 0 0 1 .527.026z" />
-                </svg>
-                Favorited
-            `;
-		}
-	});
 }
 
 // Add this function before the init() function
@@ -557,7 +510,18 @@ async function updateQuote() {
 	}
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", async () => {
+	// Wait for all required DOM elements before proceeding
+	const requiredElements = ["time", "quote", "devotionalContent", "background"];
+
+	const missing = requiredElements.filter((id) => !document.getElementById(id));
+	if (missing.length > 0) {
+		console.error("Missing required DOM elements:", missing);
+		return;
+	}
+
+	await init();
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
 	// First try to preload cached image
@@ -627,3 +591,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 		console.error("User name input not found");
 	}
 });
+
+function safeGetStorage(key, defaultValue = null) {
+	try {
+		const value = localStorage.getItem(key);
+		return value ? JSON.parse(value) : defaultValue;
+	} catch (error) {
+		console.error(`Error reading ${key} from storage:`, error);
+		return defaultValue;
+	}
+}
+
+function safeSetStorage(key, value) {
+	try {
+		localStorage.setItem(key, JSON.stringify(value));
+		return true;
+	} catch (error) {
+		console.error(`Error writing ${key} to storage:`, error);
+		return false;
+	}
+}
+
+async function fetchLocalResource(filename) {
+	try {
+		const response = await fetch(chrome.runtime.getURL(filename));
+		if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+		return await response.json();
+	} catch (error) {
+		console.error(`Error loading ${filename}:`, error);
+		return null;
+	}
+}
