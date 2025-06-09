@@ -424,6 +424,7 @@ async function init() {
 	updateTime();
 	updateQuote();
 	updateDevotional();
+	handleTabEvents();
 
 	// Set up time update intervals
 	setInterval(updateTime, 1000);
@@ -432,6 +433,26 @@ async function init() {
 
 	// Initialize devotional drawer
 	initializeDevotionalDrawer();
+}
+
+function handleTabEvents() {
+	if (chrome?.tabs) {
+		chrome.tabs.onActivated.addListener(async (activeInfo) => {
+			// Refresh content when tab becomes active
+			const tab = await chrome.tabs.get(activeInfo.tabId);
+			if (tab.url === "chrome://newtab/") {
+				updateTime();
+				updateDevotional();
+			}
+		});
+
+		chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+			// Handle tab updates
+			if (changeInfo.status === "complete" && tab.url === "chrome://newtab/") {
+				console.log("New tab page fully loaded");
+			}
+		});
+	}
 }
 
 function initializeDevotionalDrawer() {
@@ -594,7 +615,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 	// Set favicon dynamically
 	const favicon = document.getElementById("favicon");
 	if (favicon) {
-		favicon.href = chrome.runtime.getURL("icons/icon16.png");
+		try {
+			if (typeof chrome !== "undefined" && chrome.runtime) {
+				// Running as Chrome extension
+				favicon.href = chrome.runtime.getURL("icons/icon16.png");
+			} else {
+				// Running locally
+				favicon.href = "icons/icon16.png";
+			}
+		} catch (error) {
+			console.error("Error setting favicon:", error);
+			favicon.href = "icons/icon16.png";
+		}
 	}
 });
 
@@ -627,4 +659,19 @@ async function fetchLocalResource(filename) {
 		console.error(`Error loading ${filename}:`, error);
 		return null;
 	}
+}
+
+function handleImageError(imgElement) {
+	imgElement.onerror = null; // Prevent infinite loop
+	imgElement.src = "icons/icon128.png"; // Fallback image
+}
+
+// Add error handlers to your images
+document.querySelectorAll("img").forEach((img) => {
+	img.onerror = () => handleImageError(img);
+});
+
+// Add to the top of the file with other permissions
+if (!chrome?.tabs) {
+	console.warn("chrome.tabs API not available");
 }
