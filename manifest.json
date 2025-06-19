@@ -26,7 +26,7 @@
 		"https://images.unsplash.com/*"
 	],
 	"content_security_policy": {
-		"extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' https://images.unsplash.com data: https://*.netlify.app; connect-src 'self' https://api.unsplash.com https://*.netlify.app"
+		"extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' https://images.unsplash.com data: https://*.netlify.app"
 	},
 	"web_accessible_resources": [
 		{

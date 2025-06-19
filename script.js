@@ -1,3 +1,11 @@
+// Add this near the top of your script
+document.addEventListener("DOMContentLoaded", () => {
+	const stylesheet = document.getElementById("mainStylesheet");
+	if (stylesheet) {
+		stylesheet.media = "all";
+	}
+});
+
 // Loader state management
 let loaderVisible = false;
 const loader = document.getElementById("loader");
@@ -29,14 +37,21 @@ function initializeLoader() {
 
 // Update loader visibility
 function updateLoader(visible) {
+	const loader = document.getElementById("loader");
+	const container = document.querySelector(".container");
+
 	if (visible) {
 		loader.style.display = "flex";
-		container.style.display = "none";
-		loaderVisible = true;
+		// Force a reflow before adding the visible class
+		loader.offsetHeight;
+		loader.classList.add("visible");
+		container.style.opacity = "0";
 	} else {
-		loader.style.display = "none";
-		container.style.display = "block";
-		loaderVisible = false;
+		loader.classList.remove("visible");
+		setTimeout(() => {
+			loader.style.display = "none";
+			container.style.opacity = "1";
+		}, 300); // Match transition duration
 	}
 }
 
@@ -84,20 +99,64 @@ function applyFallbackImage() {
 
 // Apply background image with fade-in animation
 function applyBackgroundImage(imageData) {
-	// Store the image data
-	localStorage.setItem("lastImageDate", new Date().toISOString().split("T")[0]);
-	localStorage.setItem("imagesArray", JSON.stringify([imageData]));
+	// Enhanced validation of image data
+	if (!imageData) {
+		console.error("No image data provided");
+		return;
+	}
 
-	// Set background image
-	backgroundDiv.style.backgroundImage = `url(${imageData.url})`;
+	// Handle different image URL structures from Unsplash API
+	const imageUrl =
+		imageData.urls?.regular || imageData.urls?.full || imageData.url;
+	if (!imageUrl) {
+		console.error("No valid image URL found in image data:", imageData);
+		return;
+	}
 
-	// Fade in the background
-	backgroundDiv.style.opacity = "0";
-	backgroundDiv.style.display = "block";
-	setTimeout(() => {
-		backgroundDiv.style.opacity = "1";
+	try {
+		// Store the image data with proper validation
+		const imageToStore = {
+			url: imageUrl,
+			photographer: imageData.user?.name || imageData.photographer || "Unknown",
+			photographerUrl:
+				imageData.user?.links?.html || imageData.photographerUrl || "#",
+			location: imageData.location?.name || imageData.location || "",
+		};
+
+		localStorage.setItem(
+			"lastImageDate",
+			new Date().toISOString().split("T")[0]
+		);
+		localStorage.setItem("imagesArray", JSON.stringify([imageToStore]));
+
+		// Set background image
+		const backgroundDiv = document.querySelector(".background");
+		if (backgroundDiv) {
+			backgroundDiv.style.backgroundImage = `url(${imageUrl})`;
+			backgroundDiv.style.opacity = "0";
+			backgroundDiv.style.display = "block";
+
+			setTimeout(() => {
+				backgroundDiv.style.opacity = "1";
+				updateLoader(false);
+			}, 100);
+		}
+
+		// Update attribution
+		const photoLink = document.getElementById("photoLink");
+		const photog = document.getElementById("photog");
+		const location = document.getElementById("location");
+
+		if (photoLink) photoLink.href = imageUrl;
+		if (photog) {
+			photog.textContent = imageToStore.photographer;
+			photog.href = imageToStore.photographerUrl;
+		}
+		if (location) location.textContent = imageToStore.location;
+	} catch (error) {
+		console.error("Error applying background image:", error);
 		updateLoader(false);
-	}, 100); // Small delay to ensure transition works
+	}
 }
 
 // Fallback functions for backward compatibility
@@ -222,121 +281,126 @@ async function fetchRandomImages() {
 }
 
 async function updateQuoteAndBackground() {
-	const quotes = await fetchQuotes();
-	const now = new Date();
-	const start = new Date(now.getFullYear(), 0, 0);
-	const diff = now - start;
-	const oneDay = 1000 * 60 * 60 * 24;
-	const dayOfYear = Math.floor(diff / oneDay);
-	const quote = quotes[dayOfYear % quotes.length];
+	try {
+		const quotes = await fetchQuotes();
+		const now = new Date();
+		const start = new Date(now.getFullYear(), 0, 0);
+		const diff = now - start;
+		const oneDay = 1000 * 60 * 60 * 24;
+		const dayOfYear = Math.floor(diff / oneDay);
+		const quote = quotes[dayOfYear % quotes.length];
 
-	const today = new Date().toISOString().split("T")[0];
-	const storedDate = localStorage.getItem("lastImageDate");
-	const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
-	const storedImageIndex =
-		parseInt(localStorage.getItem("imageIndex"), 10) || 0;
+		const today = new Date().toISOString().split("T")[0];
+		const storedDate = localStorage.getItem("lastImageDate");
+		const storedImages = JSON.parse(localStorage.getItem("imagesArray")) || [];
+		const storedImageIndex =
+			parseInt(localStorage.getItem("imageIndex"), 10) || 0;
 
-	if (storedDate === today && storedImages.length > 0) {
-		// Use cached image - no need to show loader
-		const image = storedImages[storedImageIndex];
-		const imageURL = image.urls.full;
-		const photog = image.user.name;
-		const photogLink = image.user.links.html;
-		const location = image.location.name;
+		if (storedDate === today && storedImages.length > 0) {
+			// Use cached image - no need to show loader
+			const image = storedImages[storedImageIndex];
 
-		const img = new Image();
-		img.src = imageURL;
-		img.onload = () => {
-			document.getElementById("background").style.backgroundImage =
-				`url(${imageURL})`;
-			document.getElementById("photog").textContent = photog;
-			document.getElementById("photog").href =
-				`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
-			document.getElementById("photoLink").href = imageURL;
-			document.getElementById("location").textContent = location;
+			// Add null checks and fallbacks for image properties
+			const imageURL = image?.urls?.full || image?.url;
+			const photog = image?.user?.name || image?.photographer || "Unknown";
+			const photogLink = image?.user?.links?.html || "#";
+			const location = image?.location?.name || image?.location || "";
 
-			// Use requestAnimationFrame to ensure smooth animation
-			requestAnimationFrame(() => {
-				document.querySelector(".container").style.opacity = "1";
-				document.querySelector(".attribution").style.opacity = "1";
-			});
-		};
-		img.onerror = () => {
-			updateLoader(false);
-		};
-	} else {
-		// Only show loader when we need to fetch new images
-		updateLoader(true);
-		const images = await fetchRandomImages();
-		const image = images[0];
-		const imageURL = image.urls.full;
-		const photog = image.user.name;
-		const photogLink = image.user.links.html;
-		const location = image.location.name;
+			if (!imageURL) {
+				throw new Error("No valid image URL found");
+			}
 
-		localStorage.setItem("imagesArray", JSON.stringify(images));
-		localStorage.setItem("imageIndex", 0);
-		localStorage.setItem("lastImageDate", today);
+			const img = new Image();
+			img.src = imageURL;
+			img.onload = () => {
+				document.getElementById("background").style.backgroundImage =
+					`url(${imageURL})`;
+				document.getElementById("photog").textContent = photog;
+				document.getElementById("photog").href =
+					`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+				document.getElementById("photoLink").href = imageURL;
+				document.getElementById("location").textContent = location;
 
-		const img = new Image();
-		img.src = imageURL;
-		img.onload = () => {
-			document.getElementById("background").style.backgroundImage =
-				`url(${imageURL})`;
-			document.getElementById("photog").textContent = photog;
-			document.getElementById("photog").href =
-				`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
-			document.getElementById("photoLink").href = imageURL;
-			document.getElementById("location").textContent = location;
-			updateLoader(false);
-			// Use requestAnimationFrame to ensure smooth animation
-			requestAnimationFrame(() => {
-				document.querySelector(".container").style.opacity = "1";
-				document.querySelector(".attribution").style.opacity = "1";
-			});
-		};
-		img.onerror = () => {
-			updateLoader(false);
-		};
+				requestAnimationFrame(() => {
+					document.querySelector(".container").style.opacity = "1";
+					document.querySelector(".attribution").style.opacity = "1";
+				});
+			};
+			img.onerror = () => {
+				console.error("Failed to load image");
+				updateLoader(false);
+				applyFallbackImage();
+			};
+		} else {
+			// Only show loader when we need to fetch new images
+			updateLoader(true);
+			const images = await fetchRandomImages();
+			if (!images || !images.length) {
+				throw new Error("No images received from API");
+			}
+
+			const image = images[0];
+			if (!image?.urls?.full) {
+				throw new Error("Invalid image data received");
+			}
+
+			const imageURL = image.urls.full;
+			const photog = image.user?.name || "Unknown";
+			const photogLink = image.user?.links?.html || "#";
+			const location = image.location?.name || "";
+
+			localStorage.setItem("imagesArray", JSON.stringify(images));
+			localStorage.setItem("imageIndex", "0");
+			localStorage.setItem("lastImageDate", today);
+
+			const img = new Image();
+			img.src = imageURL;
+			img.onload = () => {
+				document.getElementById("background").style.backgroundImage =
+					`url(${imageURL})`;
+				document.getElementById("photog").textContent = photog;
+				document.getElementById("photog").href =
+					`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+				document.getElementById("photoLink").href = imageURL;
+				document.getElementById("location").textContent = location;
+				updateLoader(false);
+
+				requestAnimationFrame(() => {
+					document.querySelector(".container").style.opacity = "1";
+					document.querySelector(".attribution").style.opacity = "1";
+				});
+			};
+			img.onerror = () => {
+				console.error("Failed to load new image");
+				updateLoader(false);
+				applyFallbackImage();
+			};
+		}
+
+		if (quote) {
+			document.getElementById("quote").textContent = quote;
+		}
+	} catch (error) {
+		console.error("Error in updateQuoteAndBackground:", error);
+		updateLoader(false);
+		applyFallbackImage();
 	}
-	document.getElementById("quote").textContent = quote;
 }
 
 async function fetchAndUpdateImage() {
-	let images = JSON.parse(localStorage.getItem("imagesArray")) || [];
-	let imageIndex = parseInt(localStorage.getItem("imageIndex"), 10) || 0;
-
-	if (images.length === 0 || imageIndex >= images.length - 1) {
-		showLoader();
-		images = await fetchRandomImages();
-		imageIndex = 0;
-		localStorage.setItem("imagesArray", JSON.stringify(images));
-	} else {
-		imageIndex++;
+	try {
+		updateLoader(true); // Show loader before fetching
+		const images = await fetchRandomImages();
+		if (images && images.length > 0) {
+			const randomImage = images[Math.floor(Math.random() * images.length)];
+			await applyBackgroundImage(randomImage);
+		}
+	} catch (error) {
+		console.error("Error fetching new image:", error);
+		applyFallbackImage();
+	} finally {
+		updateLoader(false); // Hide loader when done
 	}
-
-	localStorage.setItem("imageIndex", imageIndex);
-
-	const image = images[imageIndex];
-	const imageURL = image.urls.full;
-	const photog = image.user.name;
-	const photogLink = image.user.links.html;
-	const location = image.location.name;
-
-	const img = new Image();
-	img.src = imageURL;
-	img.onload = () => {
-		document.getElementById("background").style.backgroundImage =
-			`url(${imageURL})`;
-		document.getElementById("photog").textContent = photog;
-		document.getElementById("photog").href =
-			`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
-		document.getElementById("photoLink").href = imageURL;
-		document.getElementById("location").textContent = location;
-
-		document.querySelector(".container").style.display = "block";
-		hideLoader();
-	};
 }
 
 async function fetchAndUpdateQuote() {
@@ -419,21 +483,49 @@ async function preloadImage() {
 }
 
 async function init() {
-	initializeLoader();
-	await loadBackgroundImage();
-	updateTime();
-	updateQuote();
-	updateDevotional();
-	handleTabEvents();
+	try {
+		// Start with a black screen, no loader
+		document.body.style.visibility = "hidden";
+		document.documentElement.style.backgroundColor = "#000";
 
-	// Set up time update intervals
-	setInterval(updateTime, 1000);
-	setInterval(updateQuote, 3600000); // Update every hour
-	setInterval(updateDevotional, 3600000); // Update every hour
+		// Try to load cached image first
+		const hasCachedImage = await preloadImage();
 
-	// Initialize devotional drawer
-	initializeDevotionalDrawer();
+		if (!hasCachedImage) {
+			// Only show loader when fetching new images
+			updateLoader(true);
+			await loadBackgroundImage();
+		}
+
+		// Load remaining resources
+		await Promise.all([updateTime(), updateQuote(), updateDevotional()]);
+
+		// Show content once everything is ready
+		requestAnimationFrame(() => {
+			document.body.style.visibility = "visible";
+			document.querySelector(".container").style.opacity = "1";
+			document.querySelector(".attribution").style.opacity = "1";
+			updateLoader(false);
+		});
+
+		// Set up intervals
+		setInterval(updateTime, 1000);
+		setInterval(updateQuote, 3600000);
+		setInterval(updateDevotional, 3600000);
+
+		// Initialize features
+		initializeDevotionalDrawer();
+		handleTabEvents();
+	} catch (error) {
+		console.error("Initialization error:", error);
+		document.body.style.visibility = "visible";
+		updateLoader(false);
+		applyFallbackImage();
+	}
 }
+
+// Update your DOMContentLoaded listener
+document.addEventListener("DOMContentLoaded", init);
 
 function handleTabEvents() {
 	if (chrome?.tabs) {
