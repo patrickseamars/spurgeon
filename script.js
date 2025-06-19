@@ -550,59 +550,76 @@ function handleTabEvents() {
 function initializeDevotionalDrawer() {
 	const devotionalToggle = document.getElementById("devotionalToggle");
 	const devotionalDrawer = document.getElementById("devotionalDrawer");
-	const closeDrawer = document.getElementById("closeDrawer");
+	const closeDrawerButton = document.getElementById("closeDrawer"); // Renamed from closeDrawer
 
-	// Guard clause to prevent errors if elements don't exist
-	if (!devotionalToggle || !devotionalDrawer || !closeDrawer) {
+	if (!devotionalToggle || !devotionalDrawer || !closeDrawerButton) {
 		console.error("Required drawer elements not found");
 		return;
 	}
 
-	// Initialize drawer state
-	devotionalDrawer.style.display = "none";
-	devotionalDrawer.style.position = "fixed";
-	devotionalDrawer.style.bottom = "0";
-	devotionalDrawer.style.left = "0";
-	devotionalDrawer.style.right = "0";
-	devotionalDrawer.style.zIndex = "1000";
-	devotionalDrawer.style.transition = "all 0.3s ease";
-	devotionalDrawer.style.background = "rgba(0, 0, 0, 0.8)";
-	devotionalDrawer.style.overflow = "hidden";
-	devotionalDrawer.style.height = "0";
+	let isAnimating = false;
+	let isOpen = false;
 
-	// Toggle drawer
-	devotionalToggle.addEventListener("click", () => {
-		if (devotionalDrawer.style.display === "none") {
-			devotionalDrawer.style.display = "block";
-			setTimeout(() => {
-				devotionalDrawer.style.height = "70vh";
-			}, 10);
-		} else {
-			devotionalDrawer.style.height = "0";
-			setTimeout(() => {
-				devotionalDrawer.style.display = "none";
-			}, 300);
-		}
-	});
+	function openDrawer() {
+		if (isAnimating || isOpen) return;
+		isAnimating = true;
+		isOpen = true;
 
-	// Close drawer
-	closeDrawer.addEventListener("click", () => {
+		devotionalDrawer.style.display = "block";
+		devotionalDrawer.offsetHeight; // Force reflow
+		devotionalDrawer.style.height = "70vh";
+
+		setTimeout(() => {
+			isAnimating = false;
+		}, 300);
+	}
+
+	function closeDrawer() {
+		if (isAnimating || !isOpen) return;
+		isAnimating = true;
+		isOpen = false;
+
 		devotionalDrawer.style.height = "0";
 		setTimeout(() => {
 			devotionalDrawer.style.display = "none";
+			isAnimating = false;
 		}, 300);
+	}
+
+	// Initialize drawer state
+	devotionalDrawer.style.display = "none";
+	devotionalDrawer.style.height = "0";
+	devotionalDrawer.style.transition = "height 0.3s ease-in-out";
+
+	// Event Listeners
+	devotionalToggle.addEventListener("click", (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		if (!isOpen) {
+			openDrawer();
+		} else {
+			closeDrawer();
+		}
 	});
 
-	// Handle click outside drawer
+	closeDrawerButton.addEventListener("click", (e) => {
+		// Updated to use new name
+		e.preventDefault();
+		e.stopPropagation();
+		closeDrawer();
+	});
+
+	devotionalDrawer.addEventListener("click", (e) => {
+		e.stopPropagation();
+	});
+
 	document.addEventListener("click", (e) => {
 		if (
+			isOpen &&
 			!devotionalDrawer.contains(e.target) &&
 			!devotionalToggle.contains(e.target)
 		) {
-			devotionalDrawer.style.height = "0";
-			setTimeout(() => {
-				devotionalDrawer.style.display = "none";
-			}, 300);
+			closeDrawer();
 		}
 	});
 }
