@@ -2,6 +2,7 @@ const axios = require("axios");
 
 exports.handler = async function () {
 	try {
+		console.log("Fetching random image from Unsplash, in unsplash.js");
 		const response = await axios.get("https://api.unsplash.com/photos/random", {
 			params: {
 				orientation: "landscape",

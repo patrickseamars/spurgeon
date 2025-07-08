@@ -75,9 +75,14 @@ async function loadBackgroundImage() {
 
 		// Otherwise, fetch new images
 		const images = await fetchRandomImages();
-		if (images.length > 0) {
+		if (images && images.length > 0) {
+			localStorage.setItem("lastImageDate", today);
+			localStorage.setItem("imagesArray", JSON.stringify(images));
 			const randomImage = images[Math.floor(Math.random() * images.length)];
 			applyBackgroundImage(randomImage);
+		} else {
+			console.error("No images returned from fetchRandomImages");
+			applyFallbackImage();
 		}
 	} catch (error) {
 		console.error("Error loading background image:", error);
@@ -120,7 +125,7 @@ function applyBackgroundImage(imageData) {
 			photographer: imageData.user?.name || imageData.photographer || "Unknown",
 			photographerUrl:
 				imageData.user?.links?.html || imageData.photographerUrl || "#",
-			location: imageData.location?.name || imageData.location || "",
+			location: imageData.location?.name || "",
 		};
 
 		localStorage.setItem(
@@ -152,7 +157,8 @@ function applyBackgroundImage(imageData) {
 			photog.textContent = imageToStore.photographer;
 			photog.href = imageToStore.photographerUrl;
 		}
-		if (location) location.textContent = imageToStore.location;
+
+		location.textContent = imageToStore.location || "";
 	} catch (error) {
 		console.error("Error applying background image:", error);
 		updateLoader(false);
@@ -269,14 +275,12 @@ async function fetchRandomImages() {
 	const url =
 		"https://melodious-dusk-d264c9.netlify.app/.netlify/functions/unsplash";
 	try {
-		const promises = Array.from({ length: 10 }, () =>
-			fetch(url).then((res) => res.json())
-		);
-		const images = await Promise.all(promises);
-		return images;
+		const response = await fetch(url);
+		const images = await response.json();
+		return Array.isArray(images) ? images : [images];
 	} catch (error) {
 		console.error("Error fetching images:", error);
-		throw error;
+		return [];
 	}
 }
 
@@ -304,7 +308,7 @@ async function updateQuoteAndBackground() {
 			const imageURL = image?.urls?.full || image?.url;
 			const photog = image?.user?.name || image?.photographer || "Unknown";
 			const photogLink = image?.user?.links?.html || "#";
-			const location = image?.location?.name || image?.location || "";
+			const location = image?.location?.name || image?.location || "butts";
 
 			if (!imageURL) {
 				throw new Error("No valid image URL found");
@@ -319,7 +323,9 @@ async function updateQuoteAndBackground() {
 				document.getElementById("photog").href =
 					`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
 				document.getElementById("photoLink").href = imageURL;
-				document.getElementById("location").textContent = location;
+				if (location) {
+					document.getElementById("location").textContent = location;
+				}
 
 				requestAnimationFrame(() => {
 					document.querySelector(".container").style.opacity = "1";
@@ -333,7 +339,6 @@ async function updateQuoteAndBackground() {
 			};
 		} else {
 			// Only show loader when we need to fetch new images
-			updateLoader(true);
 			const images = await fetchRandomImages();
 			if (!images || !images.length) {
 				throw new Error("No images received from API");
@@ -493,7 +498,6 @@ async function init() {
 
 		if (!hasCachedImage) {
 			// Only show loader when fetching new images
-			updateLoader(true);
 			await loadBackgroundImage();
 		}
 
@@ -641,33 +645,6 @@ async function updateQuote() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-	// Wait for all required DOM elements before proceeding
-	const requiredElements = ["time", "quote", "devotionalContent", "background"];
-
-	const missing = requiredElements.filter((id) => !document.getElementById(id));
-	if (missing.length > 0) {
-		console.error("Missing required DOM elements:", missing);
-		return;
-	}
-
-	await init();
-});
-
-document.addEventListener("DOMContentLoaded", async () => {
-	// First try to preload cached image
-	const hasCachedImage = await preloadImage();
-
-	if (!hasCachedImage) {
-		// If no cached image, show loader and fetch new image
-		updateLoader(true);
-		await updateQuoteAndBackground();
-	} else {
-		// If we have cached image, just update time and quote
-		updateTime();
-		updateQuote();
-		document.getElementById("quote").textContent = quote;
-	}
-
 	const format12hr = document.getElementById("format12hr");
 	const format24hr = document.getElementById("format24hr");
 
