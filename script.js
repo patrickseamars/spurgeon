@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Loader state management
 let loaderVisible = false;
+let isEvening = false; // Declare isEvening variable
 const loader = document.getElementById("loader");
 const container = document.querySelector(".container");
 const backgroundDiv = document.querySelector(".background");
@@ -45,13 +46,13 @@ function updateLoader(visible) {
 		// Force a reflow before adding the visible class
 		loader.offsetHeight;
 		loader.classList.add("visible");
+		loader.classList.remove("hidden");
 		container.style.opacity = "0";
 	} else {
+		// Fade out loader smoothly
+		loader.classList.add("hidden");
 		loader.classList.remove("visible");
-		setTimeout(() => {
-			loader.style.display = "none";
-			container.style.opacity = "1";
-		}, 300); // Match transition duration
+		loader.style.display = "none";
 	}
 }
 
@@ -158,7 +159,9 @@ function applyBackgroundImage(imageData) {
 			photog.href = imageToStore.photographerUrl;
 		}
 
-		location.textContent = imageToStore.location || "";
+		if (location) {
+			location.textContent = imageToStore.location || "";
+		}
 	} catch (error) {
 		console.error("Error applying background image:", error);
 		updateLoader(false);
@@ -308,7 +311,7 @@ async function updateQuoteAndBackground() {
 			const imageURL = image?.urls?.full || image?.url;
 			const photog = image?.user?.name || image?.photographer || "Unknown";
 			const photogLink = image?.user?.links?.html || "#";
-			const location = image?.location?.name || image?.location || "butts";
+			const location = image?.location?.name || image?.location || "";
 
 			if (!imageURL) {
 				throw new Error("No valid image URL found");
@@ -317,14 +320,23 @@ async function updateQuoteAndBackground() {
 			const img = new Image();
 			img.src = imageURL;
 			img.onload = () => {
-				document.getElementById("background").style.backgroundImage =
-					`url(${imageURL})`;
-				document.getElementById("photog").textContent = photog;
-				document.getElementById("photog").href =
-					`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
-				document.getElementById("photoLink").href = imageURL;
-				if (location) {
-					document.getElementById("location").textContent = location;
+				const backgroundEl = document.getElementById("background");
+				const photogEl = document.getElementById("photog");
+				const photoLinkEl = document.getElementById("photoLink");
+				const locationEl = document.getElementById("location");
+
+				if (backgroundEl) {
+					backgroundEl.style.backgroundImage = `url(${imageURL})`;
+				}
+				if (photogEl) {
+					photogEl.textContent = photog;
+					photogEl.href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+				}
+				if (photoLinkEl) {
+					photoLinkEl.href = imageURL;
+				}
+				if (location && locationEl) {
+					locationEl.textContent = location;
 				}
 
 				requestAnimationFrame(() => {
@@ -361,13 +373,24 @@ async function updateQuoteAndBackground() {
 			const img = new Image();
 			img.src = imageURL;
 			img.onload = () => {
-				document.getElementById("background").style.backgroundImage =
-					`url(${imageURL})`;
-				document.getElementById("photog").textContent = photog;
-				document.getElementById("photog").href =
-					`${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
-				document.getElementById("photoLink").href = imageURL;
-				document.getElementById("location").textContent = location;
+				const backgroundEl = document.getElementById("background");
+				const photogEl = document.getElementById("photog");
+				const photoLinkEl = document.getElementById("photoLink");
+				const locationEl = document.getElementById("location");
+
+				if (backgroundEl) {
+					backgroundEl.style.backgroundImage = `url(${imageURL})`;
+				}
+				if (photogEl) {
+					photogEl.textContent = photog;
+					photogEl.href = `${photogLink}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+				}
+				if (photoLinkEl) {
+					photoLinkEl.href = imageURL;
+				}
+				if (locationEl) {
+					locationEl.textContent = location;
+				}
 				updateLoader(false);
 
 				requestAnimationFrame(() => {
@@ -395,16 +418,102 @@ async function updateQuoteAndBackground() {
 async function fetchAndUpdateImage() {
 	try {
 		updateLoader(true); // Show loader before fetching
+
+		// Fade out current background and content using existing CSS transition
+		const backgroundDiv = document.querySelector(".background");
+		const container = document.querySelector(".container");
+		const attribution = document.querySelector(".attribution");
+		
+		if (backgroundDiv) {
+			// Remove any inline opacity styles to let CSS take over
+			backgroundDiv.style.removeProperty('opacity');
+			// Add class to trigger fade-out via CSS
+			backgroundDiv.classList.add('hidden');
+		}
+		if (container) {
+			container.style.opacity = "0";
+		}
+		if (attribution) {
+			attribution.style.opacity = "0";
+		}
+
+		// Wait for fade out to complete before fetching
+		await new Promise((resolve) => setTimeout(resolve, 500));
+
 		const images = await fetchRandomImages();
 		if (images && images.length > 0) {
 			const randomImage = images[Math.floor(Math.random() * images.length)];
-			await applyBackgroundImage(randomImage);
+
+			// Apply new background image with fade-in animation
+			const imageUrl =
+				randomImage.urls?.regular || randomImage.urls?.full || randomImage.url;
+			if (imageUrl && backgroundDiv) {
+				const img = new Image();
+				img.src = imageUrl;
+
+				img.onload = () => {
+					// Set new background image while hidden
+					backgroundDiv.style.backgroundImage = `url(${imageUrl})`;
+					// Ensure background is visible by removing hidden class first
+					backgroundDiv.classList.remove('hidden');
+					// Set initial opacity to 0 for fade-in
+					backgroundDiv.style.opacity = '0';
+					
+					// Update attribution
+					const photoLink = document.getElementById("photoLink");
+					const photog = document.getElementById("photog");
+					const location = document.getElementById("location");
+
+					const photographer =
+						randomImage.user?.name || randomImage.photographer || "Unknown";
+					const photographerUrl =
+						randomImage.user?.links?.html || randomImage.photographerUrl || "#";
+					const locationText =
+						randomImage.location?.name || randomImage.location || "";
+
+					if (photoLink) photoLink.href = imageUrl;
+					if (photog) {
+						photog.textContent = photographer;
+						photog.href = `${photographerUrl}?utm_source=a_moment_of_spurgeon&utm_medium=referral`;
+					}
+					if (location) {
+						location.textContent = locationText;
+					}
+
+					// Update localStorage with new image
+					const today = new Date().toISOString().split("T")[0];
+					localStorage.setItem("lastImageDate", today);
+					localStorage.setItem("imagesArray", JSON.stringify([randomImage]));
+
+					// Replicate page load fade-in behavior
+					requestAnimationFrame(() => {
+						// Trigger CSS fade-in by setting opacity to 1
+						backgroundDiv.style.opacity = "1";
+						updateLoader(false);
+						document.querySelector(".container").style.opacity = "1";
+						document.querySelector(".attribution").style.opacity = "1";
+					});
+				};
+
+				img.onerror = () => {
+					console.error("Failed to load new image");
+					updateLoader(false);
+					applyFallbackImage();
+				};
+			} else {
+				console.error("No valid image URL found");
+				updateLoader(false);
+				applyFallbackImage();
+			}
+		} else {
+			console.error("No images received from API");
+			updateLoader(false);
+			applyFallbackImage();
 		}
 	} catch (error) {
 		console.error("Error fetching new image:", error);
+		updateLoader(false);
 		applyFallbackImage();
-	} finally {
-		updateLoader(false); // Hide loader when done
 	}
 }
 
@@ -476,7 +585,10 @@ async function preloadImage() {
 			img.src = storedImages[0]?.urls?.regular || "";
 
 			img.onerror = () => {
-				background.style.opacity = "1";
+				const background = document.querySelector(".background");
+				if (background) {
+					background.style.opacity = "1";
+				}
 			};
 			return true;
 		}
